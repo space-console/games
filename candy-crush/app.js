@@ -127,52 +127,113 @@ function tapCell(i) {
 }
 
 // ---- Swap + animated resolve ---------------------------------------------
+// The engine resolves the whole turn at once, but planSwap records each step so
+// we can animate it: the two candies SLIDE into each other's cells, then each
+// cascade's matched candies POP (flash + shrink away) before the board collapses.
 function attemptSwap(r1, c1, r2, c2) {
   if (busy) return;
-  const res = engine.trySwap(r1, c1, r2, c2);
+  const a = idx(r1, c1), b = idx(r2, c2);
+  const preScore = engine.score;
+  const plan = engine.planSwap(r1, c1, r2, c2);
   selected = -1;
+  busy = true;
 
-  if (!res.valid) {
-    // Invalid swap: shake the two candies and revert (engine already reverted).
+  if (!plan.valid) {
     sound.drop();
-    rejectFeedback(idx(r1, c1), idx(r2, c2));
-    draw();
-    setStatus("No match — try another swap");
+    if (plan.swapped) {
+      // Adjacent but no match: slide the two candies, then bounce them back.
+      animateSlide(a, b, true, () => {
+        rejectFeedback(a, b);
+        draw();
+        busy = false;
+        setStatus("No match — try another swap");
+      });
+    } else {
+      draw();
+      busy = false;
+      setStatus("No match — try another swap");
+    }
     return;
   }
 
-  // Valid swap: brief clear flash, then render the settled board.
-  busy = true;
-  if (res.maxRun >= 3) sound.clear(res.maxRun);
+  if (plan.maxRun >= 3) sound.clear(plan.maxRun);
   else sound.clear(3);
-  if (res.chains >= 2) sound.levelUp();   // a cascade chain
+  if (plan.chains >= 2) sound.levelUp();   // a cascade chain
 
-  flashClear(() => {
-    busy = false;
-    draw();
-    cursor = clamp(cursor, 0, SIZE * SIZE - 1);
-    if (engine.state === "won") {
-      sound.levelUp();
-      showOverlay("You win!", winMsg());
-      setStatus(`You win · Score ${engine.score}`);
-    } else if (engine.state === "lost") {
-      sound.gameOver();
-      showOverlay("Out of moves", loseMsg());
-      setStatus(`Game over · Score ${engine.score}`);
-    } else {
-      setStatus(promptText());
-    }
+  // Slide the swap, show the swapped board, then play each cascade's pop.
+  animateSlide(a, b, false, () => {
+    renderBoard(plan.swapped);
+    let shown = preScore;
+    playSteps(plan.steps, 0,
+      (gained) => { shown += gained; els.score.textContent = shown; },
+      () => {
+        busy = false;
+        draw();
+        cursor = clamp(cursor, 0, SIZE * SIZE - 1);
+        if (engine.state === "won") {
+          sound.levelUp();
+          showOverlay("You win!", winMsg());
+          setStatus(`You win · Score ${engine.score}`);
+        } else if (engine.state === "lost") {
+          sound.gameOver();
+          showOverlay("Out of moves", loseMsg());
+          setStatus(`Game over · Score ${engine.score}`);
+        } else {
+          setStatus(promptText());
+        }
+      });
   });
 }
 
-// A short clear flash on whatever the new board shows (cheap, non-positional —
-// the engine has already collapsed, so we just pulse the whole grid briefly).
-function flashClear(done) {
-  els.grid.classList.add("is-clearing");
+// Slide the candies in cells a and b into each other's positions. With `bounce`,
+// slide there and back (a rejected swap); otherwise the caller swaps the content
+// once the slide lands. Uses live rects so it's robust to gap/cell size.
+function animateSlide(a, b, bounce, done) {
+  const ea = cells[a], eb = cells[b];
+  const ra = ea.getBoundingClientRect(), rb = eb.getBoundingClientRect();
+  const dx = rb.left - ra.left, dy = rb.top - ra.top;
+  ea.style.transition = eb.style.transition = "transform 160ms ease";
+  ea.style.zIndex = eb.style.zIndex = "5";
+  ea.style.transform = `translate(${dx}px, ${dy}px)`;
+  eb.style.transform = `translate(${-dx}px, ${-dy}px)`;
+  const cleanup = () => {
+    ea.style.transition = eb.style.transition = "";
+    ea.style.transform = eb.style.transform = "";
+    ea.style.zIndex = eb.style.zIndex = "";
+  };
   window.setTimeout(() => {
-    els.grid.classList.remove("is-clearing");
-    done();
-  }, 140);
+    if (bounce) {
+      ea.style.transform = eb.style.transform = "translate(0px, 0px)";
+      window.setTimeout(() => { cleanup(); done(); }, 170);
+    } else {
+      // cleanup + content swap happen in the same tick → no flicker.
+      cleanup();
+      done();
+    }
+  }, 170);
+}
+
+// Play the cascade steps in sequence: pop the matched candies, then show the
+// collapsed/refilled board, crediting that step's points as it lands.
+function playSteps(steps, i, onGain, done) {
+  if (i >= steps.length) { done(); return; }
+  const step = steps[i];
+  for (const [r, c] of step.cells) cells[idx(r, c)].classList.add("cell--clearing");
+  window.setTimeout(() => {
+    for (const [r, c] of step.cells) cells[idx(r, c)].classList.remove("cell--clearing");
+    renderBoard(step.board);
+    onGain(step.gained);
+    playSteps(steps, i + 1, onGain, done);
+  }, 300);
+}
+
+// Paint a raw grid snapshot (no score/cursor bookkeeping) — used during animation.
+function renderBoard(grid) {
+  for (let i = 0; i < cells.length; i++) {
+    const candy = CANDIES[grid[rowOf(i)][colOf(i)]] || CANDIES[1];
+    cells[i].style.setProperty("--fill", candy.fill);
+    cells[i].textContent = candy.glyph;
+  }
 }
 
 // Shake the two candies of a rejected swap.

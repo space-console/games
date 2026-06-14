@@ -211,6 +211,56 @@ export class Engine {
     return { valid: true, cleared, maxRun, chains, score: gained };
   }
 
+  /**
+   * Like trySwap, but RECORDS the resolution step-by-step so the UI can animate
+   * it (slide → pop matches → collapse → next cascade …). Applies score/moves/
+   * state exactly like trySwap. Returns:
+   *   { valid:false, swapped:false }  — illegal/not-adjacent (no animation)
+   *   { valid:false, swapped:true  }  — adjacent but no match (animate + bounce back)
+   *   { valid:true, swapped:Grid, steps:[{cells:[[r,c]…], board:Grid, gained}],
+   *     cleared, maxRun, chains, score }  — swapped = board right after the swap
+   *     (pre-clear); each step's `cells` are the candies that pop, and `board` is
+   *     the grid after that step collapses + refills.
+   */
+  planSwap(r1, c1, r2, c2) {
+    if (this.state !== "playing" || !this.areAdjacent(r1, c1, r2, c2)) {
+      return { valid: false, swapped: false };
+    }
+    this._swap(r1, c1, r2, c2);
+    const first = this.findMatches();
+    if (first.size === 0) {
+      this._swap(r1, c1, r2, c2); // revert: created nothing
+      return { valid: false, swapped: true };
+    }
+
+    const swapped = this._snapshot();
+    const steps = [];
+    let chains = 0, gained = 0, cleared = 0, maxRun = 0;
+    let matched = first;
+    while (matched.size > 0) {
+      chains += 1;
+      maxRun = Math.max(maxRun, this._largestRun(matched));
+      cleared += matched.size;
+      const stepGain = matched.size * POINT_PER_CANDY * chains;
+      gained += stepGain;
+      const cellsCleared = [...matched].map((k) => k.split(",").map(Number));
+      this.clearAndCollapse(matched);
+      steps.push({ cells: cellsCleared, board: this._snapshot(), gained: stepGain });
+      matched = this.findMatches();
+    }
+
+    this.score += gained;
+    this.moves -= 1;
+    if (!this.hasValidMove()) this.reshuffle();
+    this._updateVerdict();
+
+    return { valid: true, swapped, steps, cleared, maxRun, chains, score: gained };
+  }
+
+  _snapshot() {
+    return this.grid.map((row) => row.slice());
+  }
+
   // ---- Move availability + reshuffle --------------------------------------
   // Is there at least one adjacent swap that would create a match? We probe each
   // cell's right and down neighbour (covers every adjacency once), swapping,
