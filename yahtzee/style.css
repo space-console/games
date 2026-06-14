@@ -70,6 +70,7 @@
   transform-style: preserve-3d;
   transform: rotateX(0deg) rotateY(0deg);
   transition: transform 720ms cubic-bezier(0.2, 0.9, 0.25, 1);
+  will-change: transform;          /* promote to its own GPU layer: no repaint flicker */
 }
 /* Stagger the five tumbles so they don't land in lockstep. */
 .die:nth-child(2) .die-cube { transition-delay: 50ms; }
@@ -80,14 +81,16 @@
 /* Six pip faces, each a 3×3 grid pushed out to the cube surface. */
 .die-face {
   position: absolute;
-  inset: 0;
+  /* Slightly oversize each face so its rounded corners overhang the cube edges,
+     hiding the see-through gaps that flicker through mid-tumble. */
+  inset: -3%;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
-  padding: 12%;
+  padding: 13%;
   background: #f6f7fb;
   border: 2px solid #cfd4e6;
-  border-radius: 16%;
+  border-radius: 12%;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
   backface-visibility: hidden;
 }
