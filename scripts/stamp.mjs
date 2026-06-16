@@ -51,6 +51,9 @@ const INCLUDE = [
   "ludo",
   "dominoes",
   "freecell",
+  "bubble-trouble",
+  "icy-tower",
+  "space-tower",
 ];
 
 const version = randomUUID();
