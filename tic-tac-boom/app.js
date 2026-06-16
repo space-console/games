@@ -13,9 +13,9 @@
 import {
   Engine, COLS, ROWS, WALL, SOFT,
   PU_BOMB, PU_FIRE, PU_SPEED, key,
-} from "./engine.js?v=364ea0d7-a68f-4984-bea7-a253b14b54aa";
-import { Input } from "../assets/js/shared/input.js?v=364ea0d7-a68f-4984-bea7-a253b14b54aa";
-import { Sound } from "../assets/js/shared/sound.js?v=364ea0d7-a68f-4984-bea7-a253b14b54aa";
+} from "./engine.js?v=89c5264e-c6c3-41fe-afb8-ae6ea1ae200b";
+import { Input } from "../assets/js/shared/input.js?v=89c5264e-c6c3-41fe-afb8-ae6ea1ae200b";
+import { Sound } from "../assets/js/shared/sound.js?v=89c5264e-c6c3-41fe-afb8-ae6ea1ae200b";
 
 const input = new Input();
 const sound = new Sound();
