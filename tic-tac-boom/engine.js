@@ -354,10 +354,19 @@ export class Engine {
   _ai(p) {
     if (!this._atCenter(p)) return;
     const c = Math.round(p.x), r = Math.round(p.y);
-    const danger = this._dangerSet();
+    const danger = this._dangerSet();       // every tile any live bomb will hit, + flames
+    const imminent = this._imminentSet();   // flames + bombs about to go off (never enter)
 
     if (danger.has(key(c, r))) {
-      p.wantDir = this._bfsStep(p, (cc, rr) => !danger.has(key(cc, rr)), danger) ||
+      // Flee. The key to NOT self-destructing: to clear a bomb you usually must
+      // run ALONG its own blast corridor to get past its range, so we let the
+      // escape path traverse pending-blast tiles and only forbid stepping into
+      // IMMINENT death (flames / bombs about to detonate). Goal is a fully-safe
+      // tile; if none is reachable, at least get off the imminent tiles.
+      p.wantDir =
+        this._bfsStep(p, (cc, rr) => !danger.has(key(cc, rr)), imminent) ||
+        this._bfsStep(p, (cc, rr) => !imminent.has(key(cc, rr)), null) ||
+        this._randSafeDir(p, imminent) ||
         this._randSafeDir(p, danger);
       return;
     }
@@ -368,11 +377,12 @@ export class Engine {
     const crowded = this.bombs.some((b) => Math.abs(b.col - c) + Math.abs(b.row - r) <= 2);
     if (!crowded && p.bombsActive < p.maxBombs && this._worthBombing(p, c, r)) {
       const after = this._blastTilesFor(c, r, p.range);
-      // Escape route: reach any tile OUTSIDE this bomb's blast. We may run along
-      // the bomb's own blast tiles to get clear (it hasn't exploded yet); we only
-      // refuse to path through EXISTING danger (other live bombs / flames).
+      // Escape route: confirm we can actually reach a tile OUTSIDE both this new
+      // bomb's blast AND existing danger before dropping it — running along the
+      // (not-yet-lit) blast tiles is allowed; only imminent death is off-limits.
+      // We only drop the bomb when such an escape exists, so it never traps us.
       const escape = this._bfsStep(
-        p, (cc, rr) => !after.has(key(cc, rr)) && !danger.has(key(cc, rr)), danger);
+        p, (cc, rr) => !after.has(key(cc, rr)) && !danger.has(key(cc, rr)), imminent);
       if (escape) {
         this.placeBomb(p.id);
         p.wantDir = escape;
@@ -380,7 +390,14 @@ export class Engine {
       }
     }
 
-    p.wantDir = this._bfsStep(p, (cc, rr) => this._isTargetCell(cc, rr, p), danger) ||
+    // Path toward something useful, but only over tiles clear of ALL danger AND
+    // only to a destination that is itself safe — otherwise a tile sitting in a
+    // live blast (e.g. one next to a soft block we'd like to bomb) reads as a
+    // "target" and the bomber walks straight back into its own explosion. If
+    // nothing safe is reachable, stand still (wantDir stays null) rather than
+    // wandering into a blast — sitting on a safe tile never kills you.
+    p.wantDir = this._bfsStep(
+      p, (cc, rr) => !danger.has(key(cc, rr)) && this._isTargetCell(cc, rr, p), danger) ||
       this._randSafeDir(p, danger);
   }
 
@@ -403,6 +420,19 @@ export class Engine {
     const d = new Set();
     for (const b of this.bombs) for (const k of this._blastTilesFor(b.col, b.row, b.range)) d.add(k);
     for (const k of this.flames.keys()) d.add(k);
+    return d;
+  }
+
+  // Tiles that are lethal RIGHT NOW or within a fraction of a second: active
+  // flames, plus the blast of any bomb whose fuse is about to expire. A fleeing
+  // bomber may run through ordinary pending-blast tiles (the fuse gives it time)
+  // but must never step into these.
+  _imminentSet(thresh = 0.6) {
+    const d = new Set(this.flames.keys());
+    for (const b of this.bombs) {
+      if (b.fuse > thresh) continue;
+      for (const k of this._blastTilesFor(b.col, b.row, b.range)) d.add(k);
+    }
     return d;
   }
 

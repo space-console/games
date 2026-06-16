@@ -32,6 +32,7 @@ const sound = new Sound();
 const els = {
   status: document.getElementById("status"),
   bots: document.getElementById("bots"),
+  pile: document.getElementById("pile"),
   discard: document.getElementById("discard"),
   stock: document.getElementById("stock"),
   stockCount: document.getElementById("stockCount"),
@@ -385,6 +386,95 @@ function hideChooser() {
   els.chooser.classList.remove("chooser--open");
 }
 
+// ---- Drag & drop ----------------------------------------------------------
+// A card can be played either by a tap/click (no movement) or by dragging it
+// onto the discard pile. One unified Pointer Events flow handles mouse, touch,
+// and remote-emulated pointers. While a drag is live we must NOT re-render the
+// hand (that would destroy the element under the pointer), so the ghost is a
+// separate clone appended to <body> and the source card just fades.
+const DRAG_THRESHOLD = 8; // px before a press becomes a drag rather than a tap
+let drag = null;
+
+function onCardPointerDown(e, i) {
+  // Outside a live round, any press just starts / restarts the game.
+  if (state === "over" || state === "idle") { e.preventDefault(); startGame(); return; }
+  if (!(state === "playing" && engine.turn === 0)) return;
+  e.preventDefault();
+  cursor = i;
+  const btn = e.currentTarget;
+  // Capture the pointer so every move/up lands here regardless of what's under
+  // the cursor (text, other cards, the pile) — this is what makes the drag
+  // reliable on desktop where selection would otherwise eat the gesture.
+  try { btn.setPointerCapture(e.pointerId); } catch { /* older browsers */ }
+  drag = {
+    i,
+    pointerId: e.pointerId,
+    startX: e.clientX,
+    startY: e.clientY,
+    moved: false,
+    ghost: null,
+    btn,
+  };
+}
+
+function onCardPointerMove(e) {
+  if (!drag || e.pointerId !== drag.pointerId) return;
+  const dx = e.clientX - drag.startX;
+  const dy = e.clientY - drag.startY;
+
+  if (!drag.moved) {
+    if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return; // still a tap, not a drag
+    drag.moved = true;
+    const card = engine.hands[0][drag.i];
+    if (!card) { endDrag(); return; }
+    const ghost = cardChip(card);
+    ghost.classList.add("chip--drag");
+    document.body.appendChild(ghost);
+    drag.ghost = ghost;
+    drag.btn.classList.add("handcard--dragging");
+    els.discard.classList.add("discard--target");
+  }
+  drag.ghost.style.left = e.clientX + "px";
+  drag.ghost.style.top = e.clientY + "px";
+}
+
+function onCardPointerUp(e) {
+  if (!drag || e.pointerId !== drag.pointerId) return;
+  const { i, moved } = drag;
+  // Forgiving target: dropping on the pile OR anywhere above the hand row (i.e.
+  // "tossing" the card up onto the table) counts as a play.
+  const handTop = els.you.getBoundingClientRect().top;
+  const droppedToPlay = moved &&
+    (isOverPile(e.clientX, e.clientY) || e.clientY < handTop + 8);
+  endDrag();
+
+  if (!moved) {
+    humanPlay(i);            // treat a no-movement press as a tap-to-play
+  } else if (droppedToPlay) {
+    humanPlay(i);            // dropped on the pile / up onto the table → play it
+  } else {
+    render();               // dropped back down in the hand → snap back
+  }
+}
+
+// Tear down any in-flight drag visuals.
+function endDrag() {
+  if (!drag) return;
+  if (drag.ghost) drag.ghost.remove();
+  if (drag.btn) drag.btn.classList.remove("handcard--dragging");
+  els.discard.classList.remove("discard--target");
+  drag = null;
+}
+
+// Is the point over (or near) the central pile? We accept the whole pile region
+// so a drag toward the middle is forgiving on small screens.
+function isOverPile(x, y) {
+  const pad = 24;
+  const r = els.pile.getBoundingClientRect();
+  return x >= r.left - pad && x <= r.right + pad &&
+         y >= r.top - pad && y <= r.bottom + pad;
+}
+
 // ---- Rendering ------------------------------------------------------------
 function render() {
   renderBots();
@@ -393,30 +483,55 @@ function render() {
   renderActions();
 }
 
-// Build a single card chip element for a face-up card.
+// Build a single card chip element for a face-up card. The layout mirrors a
+// printed Uno card: white corner indices, a tilted white centre oval, and the
+// big coloured glyph inside it (four colour quadrants for wilds).
 function cardChip(card, { small = false } = {}) {
+  const glyph = VALUE_GLYPH[card.value] || card.value;
+
   const el = document.createElement("div");
   el.className = "chip chip--" + card.color;
   if (small) el.classList.add("chip--small");
+
+  // Top-left and bottom-right corner indices.
+  const cornerTL = document.createElement("span");
+  cornerTL.className = "chip__corner chip__corner--tl";
+  cornerTL.textContent = glyph;
+  const cornerBR = document.createElement("span");
+  cornerBR.className = "chip__corner chip__corner--br";
+  cornerBR.textContent = glyph;
+
+  // The centre oval that carries the big glyph.
+  const oval = document.createElement("div");
+  oval.className = "chip__oval";
   if (card.color === "wild") {
-    // Wilds show four colour quadrants behind the glyph.
     el.classList.add("chip--wild");
     const quad = document.createElement("div");
     quad.className = "chip__quad";
-    el.appendChild(quad);
+    oval.appendChild(quad);
   }
   const face = document.createElement("span");
   face.className = "chip__face";
-  face.textContent = VALUE_GLYPH[card.value] || card.value;
-  el.appendChild(face);
+  face.textContent = glyph;
+  oval.appendChild(face);
+
+  el.append(cornerTL, oval, cornerBR);
   return el;
 }
 
-// A face-down card back (for opponents' hands).
+// A face-down card back (for opponents' hands): a black card with a red oval
+// carrying the italic "UNO" wordmark, matching the draw deck.
 function cardBack({ small = false } = {}) {
   const el = document.createElement("div");
   el.className = "chip chip--back";
   if (small) el.classList.add("chip--small");
+  const oval = document.createElement("div");
+  oval.className = "chip__oval";
+  const face = document.createElement("span");
+  face.className = "chip__face";
+  face.textContent = "UNO";
+  oval.appendChild(face);
+  el.appendChild(oval);
   return el;
 }
 
@@ -492,14 +607,30 @@ function renderHand() {
     if (engine.lastDrawn && card === engine.lastDrawn) btn.classList.add("handcard--drawn");
 
     btn.appendChild(cardChip(card));
-    btn.addEventListener("pointerdown", (e) => {
-      e.preventDefault();
-      if (state === "over" || state === "idle") { startGame(); return; }
-      if (!myTurn) return;
-      cursor = i;
-      humanPlay(i);
-    });
+    btn.addEventListener("pointerdown", (e) => onCardPointerDown(e, i));
     els.you.appendChild(btn);
+  });
+
+  layoutHand(myTurn);
+}
+
+// Lay the hand out as a single overlapping row that always fits the width (so it
+// never wraps into a hidden second row), and raise the hovered card with a high
+// z-index so it reads clearly above its neighbours.
+function layoutHand(myTurn) {
+  const cards = Array.from(els.you.children);
+  const n = cards.length;
+  if (!n) return;
+  const cardW = cards[0].offsetWidth;
+  const avail = els.you.clientWidth - 4;             // small safety margin
+  const gap = cardW * 0.14;                          // breathing room when there's space
+  const maxStep = cardW + gap;                       // don't spread further than this
+  const fitStep = n > 1 ? (avail - cardW) / (n - 1) : maxStep;
+  // Clamp so cards overlap when crowded but never hide each other's left index.
+  const step = Math.max(cardW * 0.3, Math.min(maxStep, fitStep));
+  cards.forEach((c, i) => {
+    c.style.marginLeft = i === 0 ? "0px" : `${step - cardW}px`;
+    c.style.zIndex = String(myTurn && i === cursor ? 1000 : i + 1);
   });
 }
 
@@ -608,6 +739,11 @@ els.stock.addEventListener("pointerdown", (e) => {
 function boot() {
   input.start();
   els.mute.addEventListener("click", toggleMute);
+
+  // Global drag tracking: move/up can land anywhere, so listen on the window.
+  window.addEventListener("pointermove", onCardPointerMove);
+  window.addEventListener("pointerup", onCardPointerUp);
+  window.addEventListener("pointercancel", onCardPointerUp);
   window.addEventListener("keydown", (e) => {
     if (e.key === "m" || e.key === "M") toggleMute();
     else if ((e.key === "d" || e.key === "D") && state === "playing" && engine.turn === 0) humanDraw();
