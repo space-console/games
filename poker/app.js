@@ -5,9 +5,9 @@
 // (idle → playing → showdown → over). The engine owns all rules and hand
 // evaluation; this file is input + render + the AI heuristics.
 
-import { Engine, RANK_LABEL, SUIT_SYMBOL, evaluate, compareScore } from "./engine.js?v=1051ccaa-4f04-451e-bb60-4005e2490f2f";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=1051ccaa-4f04-451e-bb60-4005e2490f2f";
-import { Sound } from "../assets/js/shared/sound.js?v=1051ccaa-4f04-451e-bb60-4005e2490f2f";
+import { Engine, RANK_LABEL, SUIT_SYMBOL, evaluate, compareScore } from "./engine.js?v=36cab9b8-1f60-4318-ac58-33473316838a";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=36cab9b8-1f60-4318-ac58-33473316838a";
+import { Sound } from "../assets/js/shared/sound.js?v=36cab9b8-1f60-4318-ac58-33473316838a";
 
 const engine = new Engine();
 const input = new Input();

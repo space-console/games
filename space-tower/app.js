@@ -1,8 +1,8 @@
 // Space Tower for Space Console — entry point.
 // Wires input to the pure engine, runs a fixed-dt accumulator loop, and renders
-// the faux-3D tower, the sliding section, the sliced-off falling pieces, the sky
-// (which deepens toward space as you climb), and the HUD. The engine owns all
-// rules; this file is input + render only (the camera lives here).
+// the crane + rope, the swinging/falling house section, the building of houses
+// (with windows), and the leaning tower. The engine owns all rules; this file is
+// input + render only (the camera lives here).
 //
 // Controls: 1-player drops with Space / ↑ / Enter / tap. Two-player co-op takes
 // turns — A drops for P1, L for P2; on touch the DROP button drops for whoever's
@@ -11,9 +11,10 @@
 import {
   Engine,
   WORLD_W, WORLD_H, BLOCK_H, BASE_Y,
-} from "./engine.js?v=1051ccaa-4f04-451e-bb60-4005e2490f2f";
-import { Input } from "../assets/js/shared/input.js?v=1051ccaa-4f04-451e-bb60-4005e2490f2f";
-import { Sound } from "../assets/js/shared/sound.js?v=1051ccaa-4f04-451e-bb60-4005e2490f2f";
+  DROP_H, PIVOT_UP,
+} from "./engine.js?v=36cab9b8-1f60-4318-ac58-33473316838a";
+import { Input } from "../assets/js/shared/input.js?v=36cab9b8-1f60-4318-ac58-33473316838a";
+import { Sound } from "../assets/js/shared/sound.js?v=36cab9b8-1f60-4318-ac58-33473316838a";
 
 const engine = new Engine(Math.random);
 const input = new Input();
@@ -39,25 +40,35 @@ const els = {
 const BEST_KEY = "spacetower.best";
 let best = Number(localStorage.getItem(BEST_KEY) || 0);
 
-const DEPTH = 11;                 // faux-3D block depth (up-right offset)
-const PLAYER_TINT = ["#5aa0ff", "#ff7a9c"]; // P1 / P2 turn accents
+const DEPTH = 9;                          // faux-3D depth of a house
+const MAX_LEAN = 0.13;                    // radians the building leans at full drift
+const PLAYER_TINT = ["#5aa0ff", "#ff7a9c"];
 
-let camY = 0;                     // world Y shown at the top of the screen
-let pieces = [];                  // falling sliced-off chunks (cosmetic)
-let popups = [];                  // floating "Perfect!" / combo text
-let flash = 0;                    // brief white flash on a perfect
+let camY = 0;
+let popups = [];
+let debris = [];                  // collapsing house floors after a loss
+let toppleDir = 1;               // which way the building was leaning when it fell
+let edgePiece = null;            // the section that slid off (gross-miss topple)
+let overlayTimer = null;
+
+const DEBRIS_G = 1500;
 
 const STEP = 1 / 120;
 const MAX_FRAME = 0.05;
 let lastTime = 0, acc = 0, animClock = 0;
 
 // ---- Game-state transitions ----------------------------------------------
+function targetCamY() { return engine.pivotY - 24; }
+
 function startGame(numPlayers) {
   sound.resume();
   sound.start();
-  pieces = []; popups = []; flash = 0;
+  popups = [];
+  debris = [];
+  edgePiece = null;
+  if (overlayTimer) { clearTimeout(overlayTimer); overlayTimer = null; }
   engine.start(numPlayers);
-  camY = targetCamY();           // snap camera so the first section is framed
+  camY = targetCamY();
   hideOverlay();
   setStatus(numPlayers === 2 ? "Co-op — take turns" : "");
   lastTime = performance.now();
@@ -66,35 +77,59 @@ function startGame(numPlayers) {
 
 function idleOrOver() { return engine.state === "idle" || engine.state === "over"; }
 
-engine.addEventListener("drop", (e) => {
+engine.addEventListener("release", () => sound.drop());
+engine.addEventListener("place", (e) => {
   const d = e.detail;
-  for (const c of d.cuts) pieces.push({ ...c, y: c.yTop, vy: 30, rot: 0, rotV: (c.vx > 0 ? 1 : -1) * 2, age: 0 });
   if (d.perfect) {
     sound.clear(Math.min(4, 1 + d.combo));
-    flash = 0.18;
-    const m = engine.top;
-    popups.push({ text: d.combo > 1 ? `Perfect! x${d.combo}` : "Perfect!", x: m.cx, y: m.yTop - 12, age: 0, ttl: 0.9 });
+    const t = engine.top;
+    popups.push({ text: d.combo > 1 ? `Perfect! x${d.combo}` : "Perfect!", x: t.cx, y: t.yTop - 10, age: 0, ttl: 0.9 });
   } else {
     sound.lock();
   }
 });
-engine.addEventListener("miss", (e) => {
-  const c = e.detail;
-  pieces.push({ ...c, y: c.yTop, vy: 20, rot: 0, rotV: 3, age: 0 });
+engine.addEventListener("topple", (e) => {
+  toppleDir = e.detail.dir || 1;
+  edgePiece = e.detail.piece || null;
 });
 engine.addEventListener("gameover", () => {
   sound.gameOver();
   if (engine.score > best) { best = engine.score; localStorage.setItem(BEST_KEY, String(best)); }
-  showMenu("Tower Toppled!", `Height ${engine.height} · Score ${engine.score} · Best ${best}`);
-  setStatus("Game over");
+  spawnDebris();
+  // Let the building crumble before the overlay drops in.
+  overlayTimer = setTimeout(() => {
+    showMenu("Tower Toppled!", `Height ${engine.height} · Score ${engine.score} · Best ${best}`);
+  }, 1200);
+  setStatus("Toppled!");
 });
 
-// ---- Input ----------------------------------------------------------------
-function dropFor(id) {
-  if (idleOrOver()) return;
-  sound.resume();
-  engine.drop(id);
+// Turn the stacked floors (and any slid-off piece) into debris that falls and
+// scatters — the foundation stays put. No rigid spin, just a crumble.
+function spawnDebris() {
+  debris = [];
+  const blocks = engine.blocks;
+  const n = blocks.length;
+  for (let i = 1; i < n; i++) {            // keep the base (i = 0) standing
+    const b = blocks[i];
+    const f = i / n;                       // higher floors fly further
+    debris.push({
+      cx: b.cx, yTop: b.yTop, w: b.w, hue: b.hue,
+      vx: toppleDir * (30 + f * 130) + ((i * 53) % 40 - 20),
+      vy: -(30 + f * 70),
+      rot: 0,
+      rotV: toppleDir * (0.8 + f * 1.6) * ((i % 2) ? 1 : -1),
+    });
+  }
+  if (edgePiece) {
+    debris.push({
+      cx: edgePiece.cx, yTop: edgePiece.yTop, w: edgePiece.w, hue: edgePiece.hue,
+      vx: toppleDir * 160, vy: -40, rot: 0, rotV: toppleDir * 3,
+    });
+  }
 }
+
+// ---- Input ----------------------------------------------------------------
+function dropFor(id) { if (!idleOrOver()) { sound.resume(); engine.drop(id); } }
 
 input.on((intent) => {
   if (intent === "back") { location.href = "../"; return; }
@@ -112,11 +147,9 @@ window.addEventListener("keydown", (e) => {
   }
   switch (e.key) {
     case " ": case "ArrowUp": case "Enter":
-      e.preventDefault();
-      dropFor(engine.numPlayers === 2 ? engine.turn : 0);
-      break;
-    case "a": case "A": dropFor(0); break;   // P1 (co-op)
-    case "l": case "L": dropFor(1); break;   // P2 (co-op)
+      e.preventDefault(); dropFor(engine.numPlayers === 2 ? engine.turn : 0); break;
+    case "a": case "A": dropFor(0); break;
+    case "l": case "L": dropFor(1); break;
   }
 });
 
@@ -134,12 +167,6 @@ els.btnDrop.addEventListener("pointerdown", (e) => {
 });
 
 // ---- Loop -----------------------------------------------------------------
-function targetCamY() {
-  // Keep the active (top + sliding) section ~42% down the screen.
-  const topY = engine.moving ? engine.moving.yTop : engine.top.yTop;
-  return topY - WORLD_H * 0.42;
-}
-
 function loop(now) {
   let frame = (now - lastTime) / 1000;
   lastTime = now;
@@ -149,18 +176,12 @@ function loop(now) {
   acc += frame;
   while (acc >= STEP) { engine.step(STEP); acc -= STEP; }
 
-  // Ease the camera toward its target (only really moves while playing).
   if (engine.state === "playing") {
-    const t = targetCamY();
-    camY += (t - camY) * Math.min(1, frame * 6);
+    camY += (targetCamY() - camY) * Math.min(1, frame * 6);
   }
-
-  // Advance falling pieces + popups + flash.
-  for (const p of pieces) { p.age += frame; p.vy += 900 * frame; p.y += p.vy * frame; p.cx += (p.vx || 0) * frame; p.rot += p.rotV * frame; }
-  pieces = pieces.filter((p) => p.y - camY < WORLD_H + 200 && p.age < 4);
-  for (const pu of popups) { pu.age += frame; pu.y -= 28 * frame; }
+  for (const pu of popups) { pu.age += frame; pu.y -= 26 * frame; }
   popups = popups.filter((pu) => pu.age < pu.ttl);
-  if (flash > 0) flash = Math.max(0, flash - frame);
+  for (const d of debris) { d.vy += DEBRIS_G * frame; d.cx += d.vx * frame; d.yTop += d.vy * frame; d.rot += d.rotV * frame; }
 
   draw();
   requestAnimationFrame(loop);
@@ -178,17 +199,40 @@ function draw() {
   drawSky();
 
   ctx.setTransform(scaleX, 0, 0, scaleY, 0, -camY * scaleY);
-  for (const b of engine.blocks) drawBlock(b);
-  for (const p of pieces) drawBlock({ cx: p.cx, w: p.w, yTop: p.y, hue: p.hue }, p.rot);
-  if (engine.moving) drawBlock(engine.moving, 0, true);
+
+  if (debris.length) {
+    // After a loss the building has crumbled: the foundation stays, the floors
+    // tumble away as debris.
+    drawHouse(engine.blocks[0], 0);
+    for (const d of debris) drawDebris(d);
+  } else {
+    // The placed building leans about its base as the centre of mass drifts.
+    const lean = engine.leanFrac * MAX_LEAN;
+    const base = engine.blocks[0];
+    const pivotX = base.cx, pivotYw = base.yTop + BLOCK_H;
+    ctx.save();
+    ctx.translate(pivotX, pivotYw);
+    ctx.rotate(lean);
+    ctx.translate(-pivotX, -pivotYw);
+    for (let i = 0; i < engine.blocks.length; i++) drawHouse(engine.blocks[i], i);
+    ctx.restore();
+  }
+
+  // Crane + the live (swinging or falling) section, which are not part of the
+  // leaning building.
+  if (engine.current) {
+    if (engine.current.phase === "aim") drawCrane();
+    drawHouse({ cx: engine.current.x, w: engine.current.w, yTop: engine.current.y, hue: engine.current.hue },
+      engine.blocks.length);
+  }
+
   drawPopups();
 
   ctx.setTransform(scaleX, 0, 0, scaleY, 0, 0);
-  if (flash > 0) { ctx.fillStyle = `rgba(255,255,255,${flash})`; ctx.fillRect(0, 0, WORLD_W, WORLD_H); }
   drawHud();
 }
 
-// Sky that deepens from clear blue toward dusk and space as the tower climbs.
+// Sky that deepens from clear blue toward dusk/space as the tower climbs.
 function drawSky() {
   const t = Math.min(1, engine.height / 70);
   const topC = mix([24, 38, 90], [6, 8, 24], t);
@@ -201,24 +245,21 @@ function drawSky() {
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, WORLD_W, WORLD_H);
 
-  // Stars fade in as the sky darkens.
-  if (t > 0.25) {
-    ctx.fillStyle = `rgba(255,255,255,${(t - 0.25) * 0.9})`;
-    for (let i = 0; i < 40; i++) {
+  if (t > 0.2) {
+    ctx.fillStyle = `rgba(255,255,255,${(t - 0.2) * 0.9})`;
+    for (let i = 0; i < 44; i++) {
       const sx = (i * 97 % WORLD_W);
-      const sy = ((i * 131 + Math.floor(camY * 0.2)) % WORLD_H + WORLD_H) % WORLD_H;
+      const sy = ((i * 131 + Math.floor(camY * 0.25)) % WORLD_H + WORLD_H) % WORLD_H;
       const tw = 0.6 + Math.abs(Math.sin(animClock * 2 + i)) * 1.2;
       ctx.fillRect(sx, sy, tw, tw);
     }
   }
-
-  // Parallax clouds drifting low.
   ctx.fillStyle = `rgba(255,255,255,${0.7 * (1 - t)})`;
   for (let i = 0; i < 3; i++) {
-    const cy = 120 + i * 180 + (camY * 0.25) % 540;
+    const cy = 120 + i * 190 + (camY * 0.25) % 570;
     const yy = ((cy % (WORLD_H + 120)) + WORLD_H + 120) % (WORLD_H + 120) - 60;
     const cx = ((i * 170 + animClock * 8 * (i + 1)) % (WORLD_W + 160)) - 80;
-    cloud(cx, yy, 34);
+    cloud(cx, yy, 32);
   }
 }
 
@@ -231,53 +272,96 @@ function cloud(x, y, r) {
   ctx.fill();
 }
 
-// A faux-3D block: front face + a lighter top face + a darker right side, so the
-// tower reads as solid. `moving` blocks get a turn-tinted outline in co-op.
-function drawBlock(b, rot = 0, moving = false) {
+// The crane: a girder beam across the top, a trolley, and the cable holding the
+// swinging section by a little hook.
+function drawCrane() {
+  const c = engine.current;
+  const pivotY = engine.pivotY;
+  const beamY = pivotY - 6;
+  // Beam.
+  ctx.fillStyle = "#3a4256";
+  ctx.fillRect(40, beamY - 7, WORLD_W - 80, 9);
+  ctx.fillStyle = "#5b6478";
+  ctx.fillRect(40, beamY - 7, WORLD_W - 80, 3);
+  // Lattice ticks.
+  ctx.strokeStyle = "rgba(0,0,0,0.3)"; ctx.lineWidth = 1;
+  for (let x = 50; x < WORLD_W - 50; x += 22) {
+    ctx.beginPath(); ctx.moveTo(x, beamY - 7); ctx.lineTo(x + 11, beamY + 2); ctx.stroke();
+  }
+  // Trolley at the pivot.
+  ctx.fillStyle = "#ffcf3f";
+  roundRect(WORLD_W / 2 - 10, beamY - 3, 20, 8, 2);
+  // Cable to the section.
+  ctx.strokeStyle = "#2a2f3e"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(WORLD_W / 2, beamY + 4); ctx.lineTo(c.x, c.y - 6); ctx.stroke();
+  // Hook.
+  ctx.strokeStyle = "#9aa3b8"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(c.x, c.y - 3, 4, 0.1 * Math.PI, 1.6 * Math.PI); ctx.stroke();
+}
+
+// A house section: faux-3D body, rows of windows, and a door on the ground floor.
+function drawHouse(b, idx) {
   const left = b.cx - b.w / 2, right = b.cx + b.w / 2;
   const top = b.yTop, bot = b.yTop + BLOCK_H;
-  const front = `hsl(${b.hue},58%,52%)`;
-  const topF = `hsl(${b.hue},58%,66%)`;
-  const side = `hsl(${b.hue},58%,38%)`;
+  const wall = `hsl(${b.hue},42%,64%)`;
+  const wallTop = `hsl(${b.hue},42%,76%)`;
+  const wallSide = `hsl(${b.hue},42%,46%)`;
+  const isBase = idx === 0;
 
-  ctx.save();
-  if (rot) { ctx.translate(b.cx, top + BLOCK_H / 2); ctx.rotate(rot); ctx.translate(-b.cx, -(top + BLOCK_H / 2)); }
-
-  // Right side face.
-  ctx.fillStyle = side;
+  // Right side + top faces (depth).
+  ctx.fillStyle = wallSide;
   ctx.beginPath();
   ctx.moveTo(right, top); ctx.lineTo(right + DEPTH, top - DEPTH);
   ctx.lineTo(right + DEPTH, bot - DEPTH); ctx.lineTo(right, bot);
   ctx.closePath(); ctx.fill();
-
-  // Top face.
-  ctx.fillStyle = topF;
+  ctx.fillStyle = wallTop;
   ctx.beginPath();
   ctx.moveTo(left, top); ctx.lineTo(right, top);
   ctx.lineTo(right + DEPTH, top - DEPTH); ctx.lineTo(left + DEPTH, top - DEPTH);
   ctx.closePath(); ctx.fill();
 
-  // Front face.
-  ctx.fillStyle = front;
+  // Front wall.
+  ctx.fillStyle = wall;
   ctx.fillRect(left, top, b.w, BLOCK_H);
+  ctx.strokeStyle = "rgba(0,0,0,0.22)"; ctx.lineWidth = 1.2;
+  ctx.strokeRect(left, top, b.w, BLOCK_H);
 
-  // Brick seams on the front for a built-tower look.
-  ctx.strokeStyle = "rgba(0,0,0,0.12)";
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(left, top + BLOCK_H / 2); ctx.lineTo(right, top + BLOCK_H / 2); ctx.stroke();
-  for (let bx = left + 22; bx < right; bx += 38) {
-    const off = 0; // simple grid seams
-    ctx.beginPath(); ctx.moveTo(bx, top); ctx.lineTo(bx, top + BLOCK_H / 2); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(bx + 19, top + BLOCK_H / 2); ctx.lineTo(bx + 19, bot); ctx.stroke();
-    void off;
+  // Windows: a tidy grid, most lit warm, some dark (deterministic per floor).
+  const cols = Math.max(2, Math.round(b.w / 42));
+  const cellW = b.w / cols;
+  const winW = Math.min(16, cellW * 0.5), winH = 16;
+  const rows = isBase ? 1 : 2;
+  for (let r = 0; r < rows; r++) {
+    const wy = top + 8 + r * 19;
+    for (let col = 0; col < cols; col++) {
+      // ground floor: leave the centre for a door.
+      if (isBase && Math.abs(col - (cols - 1) / 2) < 0.6) continue;
+      const wx = left + cellW * col + (cellW - winW) / 2;
+      const lit = (col + r * 2 + idx * 3) % 3 !== 0;
+      ctx.fillStyle = lit ? "#ffe07a" : "#27405e";
+      roundRect(wx, wy, winW, winH, 2);
+      ctx.strokeStyle = "rgba(0,0,0,0.35)"; ctx.lineWidth = 1;
+      ctx.strokeRect(wx, wy, winW, winH);
+      ctx.beginPath(); ctx.moveTo(wx + winW / 2, wy); ctx.lineTo(wx + winW / 2, wy + winH);
+      ctx.moveTo(wx, wy + winH / 2); ctx.lineTo(wx + winW, wy + winH / 2); ctx.stroke();
+    }
   }
 
-  // Outline (turn-tinted for the live moving section in co-op).
-  ctx.lineWidth = moving && engine.numPlayers === 2 ? 3 : 1.5;
-  ctx.strokeStyle = moving && engine.numPlayers === 2
-    ? PLAYER_TINT[engine.turn]
-    : "rgba(0,0,0,0.25)";
-  ctx.strokeRect(left, top, b.w, BLOCK_H);
+  // Door on the ground floor.
+  if (isBase) {
+    ctx.fillStyle = "#6b4423";
+    roundRect(b.cx - 9, bot - 22, 18, 22, 2);
+    ctx.fillStyle = "#ffd23f"; dot(b.cx + 4, bot - 11, 1.4);
+  }
+}
+
+// A tumbling house floor (rotated about its own centre) during the collapse.
+function drawDebris(d) {
+  ctx.save();
+  ctx.translate(d.cx, d.yTop + BLOCK_H / 2);
+  ctx.rotate(d.rot);
+  ctx.translate(-d.cx, -(d.yTop + BLOCK_H / 2));
+  drawHouse({ cx: d.cx, w: d.w, yTop: d.yTop, hue: d.hue }, 1);
   ctx.restore();
 }
 
@@ -302,24 +386,38 @@ function drawHud() {
   ctx.fillStyle = "rgba(0,0,0,0.4)";
   const hw = ctx.measureText(h).width;
   roundRect(WORLD_W / 2 - hw / 2 - 10, 10, hw + 20, 28, 8);
-  ctx.fillStyle = "#fff";
-  ctx.textAlign = "center";
+  ctx.fillStyle = "#fff"; ctx.textAlign = "center";
   ctx.fillText(h, WORLD_W / 2, 24);
   ctx.textAlign = "left";
+
+  // Lean / balance meter — fills toward red as the building tips.
+  if (engine.state === "playing") {
+    const bw = 150, bx = WORLD_W / 2 - bw / 2, by = 46;
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    roundRect(bx, by, bw, 8, 4);
+    const f = Math.abs(engine.leanFrac);
+    const col = f < 0.55 ? "#46e0a0" : f < 0.8 ? "#ffd23f" : "#ff5a5a";
+    ctx.fillStyle = col;
+    // marker grows from the centre toward the leaning side.
+    const half = bw / 2;
+    const wlen = half * f;
+    if (engine.leanFrac >= 0) roundRect(bx + half, by, wlen, 8, 4);
+    else roundRect(bx + half - wlen, by, wlen, 8, 4);
+    ctx.fillStyle = "rgba(255,255,255,0.6)";
+    ctx.fillRect(bx + half - 1, by - 2, 2, 12);
+  }
 
   // Co-op turn indicator.
   if (engine.numPlayers === 2 && engine.state === "playing") {
     const label = "P" + (engine.turn + 1) + "'s turn";
     ctx.font = "bold 16px 'Segoe UI', sans-serif";
     const lw = ctx.measureText(label).width;
-    const pulse = 0.55 + Math.abs(Math.sin(animClock * 5)) * 0.45;
+    ctx.globalAlpha = 0.6 + Math.abs(Math.sin(animClock * 5)) * 0.4;
     ctx.fillStyle = PLAYER_TINT[engine.turn];
-    ctx.globalAlpha = pulse;
-    roundRect(WORLD_W / 2 - lw / 2 - 10, 44, lw + 20, 24, 7);
+    roundRect(WORLD_W / 2 - lw / 2 - 10, 62, lw + 20, 24, 7);
     ctx.globalAlpha = 1;
-    ctx.fillStyle = "#fff";
-    ctx.textAlign = "center";
-    ctx.fillText(label, WORLD_W / 2, 56);
+    ctx.fillStyle = "#fff"; ctx.textAlign = "center";
+    ctx.fillText(label, WORLD_W / 2, 74);
     ctx.textAlign = "left";
   }
 }
@@ -327,6 +425,7 @@ function drawHud() {
 // ---- Helpers --------------------------------------------------------------
 function mix(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
 function rgb(c) { return `rgb(${c[0] | 0},${c[1] | 0},${c[2] | 0})`; }
+function dot(x, y, r) { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
 function roundRect(x, y, w, h, r) {
   const rr = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
@@ -366,9 +465,9 @@ function boot() {
   window.addEventListener("keydown", (e) => { if (e.key === "m" || e.key === "M") toggleMute(); });
   window.addEventListener("resize", resize);
 
-  camY = BASE_Y - WORLD_H * 0.42;
+  camY = (BASE_Y - DROP_H - PIVOT_UP) - 24;
   resize();
-  showMenu("Space Tower", "Drop each section to build the tower — stack it dead-centre!");
+  showMenu("Space Tower", "A crane drops houses from the sky — stack them straight or the tower topples!");
   lastTime = performance.now();
   requestAnimationFrame(loop);
 }

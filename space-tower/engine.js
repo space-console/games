@@ -1,35 +1,47 @@
-// Space Tower — the pure stacking-game core. No DOM, no rendering, no input:
-// it owns the stacked tower of sections, the single section sliding back and
-// forth at the top, the drop/overlap/slice rule, perfect-drop combos, the
-// score/height, and (for co-op) whose turn it is. app.js drives it from input +
-// a fixed-dt accumulator and renders its state; the camera is purely a render
-// concern and lives there.
+// Space Tower — the pure stacking-game core. No DOM, no rendering, no input.
 //
-// Drop rule (classic stacker): when you drop the moving section, only the part
-// that overlaps the section below survives — the overhang is sliced off and
-// falls away, so the tower narrows toward the sky. Drop it dead-centre for a
-// "perfect" (no width lost, builds a combo). Miss the tower entirely and it
-// topples — game over.
+// A crane dangles a house section from a rope high above the tower; the section
+// swings side to side. You drop it and it falls onto the building. Sections keep
+// their full size (they're houses, not sliced bricks) — what matters is WHERE
+// they land:
+//   - land a section mostly off the floor below and it slides off → the tower
+//     topples.
+//   - even when each floor is supported, sloppy stacking drifts the building's
+//     centre of mass off the base; once the lean passes the limit the whole
+//     tower keels over. Centre your drops (or correct a lean by stacking the
+//     other way) to keep climbing.
 //
-// Two-player is co-operative: players ALTERNATE dropping sections to build one
-// shared tower for a shared score; a single miss ends it for both.
+// Two-player is co-operative: players alternate dropping sections to raise one
+// shared building for a shared score; a topple ends it for both.
 //
 // Coordinates: world Y increases DOWNWARD. The base sits low (large y); each new
-// section is one BLOCK_H higher (smaller y). Sections are {cx, w, yTop, hue}.
+// floor is one BLOCK_H higher (smaller y). Blocks are {cx, w, yTop, hue}.
 //
-// Deterministic: the only randomness is the starting colour hue (injected RNG),
-// so a given seed reproduces the same run (self-test-able without a DOM).
+// Deterministic: the only randomness (starting hue) flows through an injected
+// RNG, so a seed reproduces the run (self-test-able without a DOM).
 
 export const WORLD_W = 460;
 export const WORLD_H = 680;
-export const BLOCK_H = 36;
-export const BASE_W = 210;
-export const BASE_Y = WORLD_H - 130;     // top edge of the base section
+export const BLOCK_H = 46;               // a house floor is tall enough for windows
+export const BASE_W = 176;               // the foundation floor (a touch wider)
+export const FLOOR_W = 124;              // every stacked house floor
+export const BASE_Y = WORLD_H - 150;     // top edge of the base
 
-const BASE_SPEED = 150;                  // section slide speed (units/s)
-const SPEED_STEP = 4;                    // ramps with height
-const MAX_SPEED = 360;
-const PERFECT_EPS = 5;                   // centre tolerance for a "perfect" drop
+// Crane geometry (world units, relative to the current tower top).
+export const DROP_H = 250;               // how high above the tower a section hangs
+export const PIVOT_UP = 74;              // crane pivot sits this far above the section
+
+const G = 1750;                          // fall gravity
+const AMP_BASE = 110;                    // swing amplitude at the bottom...
+const AMP_MAX = 158;                     // ...and its cap as you climb
+const AMP_PER = 5;
+const SWING_BASE = 1.7;                  // swing speed (rad/s), ramps with height
+const SWING_PER = 0.045;
+const SWING_MAX = 3.2;
+
+const SLIP = FLOOR_W / 2;                // land farther off than this → it slides off
+const MAX_DRIFT = 72;                    // centre-of-mass lean the base can bear
+const PERFECT_EPS = 8;                   // centre tolerance for a "perfect" stack
 
 export function makeRng(seed = 1) {
   let a = seed >>> 0;
@@ -53,102 +65,116 @@ export class Engine extends EventTarget {
     this.numPlayers = 1;
     this.baseHue = Math.floor(this.rng() * 360);
     this.blocks = [{ cx: WORLD_W / 2, w: BASE_W, yTop: BASE_Y, hue: this.baseHue }];
-    this.moving = null;
-    this.speed = BASE_SPEED;
-    this.height = 0;       // sections stacked above the base
+    this.current = null;     // live section: {phase:'aim'|'fall', x, y, w, vy, swingT, hue}
+    this.height = 0;
     this.score = 0;
     this.combo = 0;
-    this.turn = 0;         // whose turn to drop (co-op)
-    this.state = "idle";   // idle | playing | over
+    this.turn = 0;
+    this.drift = 0;          // centre-of-mass offset from the base (signed)
+    this.leanFrac = 0;       // drift / MAX_DRIFT, clamped — render leans the tower by this
+    this.state = "idle";     // idle | playing | over
   }
 
   start(numPlayers = 1) {
     this.numPlayers = Math.max(1, Math.min(2, numPlayers));
     this.baseHue = Math.floor(this.rng() * 360);
     this.blocks = [{ cx: WORLD_W / 2, w: BASE_W, yTop: BASE_Y, hue: this.baseHue }];
-    this.speed = BASE_SPEED;
     this.height = 0;
     this.score = 0;
     this.combo = 0;
     this.turn = 0;
+    this.drift = 0;
+    this.leanFrac = 0;
     this.state = "playing";
     this._spawn();
   }
 
   get top() { return this.blocks[this.blocks.length - 1]; }
+  get pivotY() { return this.top.yTop - DROP_H - PIVOT_UP; }
+  _hueFor(h) { return (this.baseHue + h * 16) % 360; }
+  _amp() { return Math.min(AMP_MAX, AMP_BASE + this.height * AMP_PER); }
+  _swingSpeed() { return Math.min(SWING_MAX, SWING_BASE + this.height * SWING_PER); }
 
-  _hueFor(h) { return (this.baseHue + h * 14) % 360; }
-
-  // Spawn the next sliding section above the tower, entering from an alternating
-  // side at the current width.
+  // Hang the next section from the crane, swinging.
   _spawn() {
-    const top = this.top;
-    const w = top.w;
-    const fromLeft = this.height % 2 === 0;
-    this.moving = {
-      cx: fromLeft ? w / 2 : WORLD_W - w / 2,
-      w,
-      yTop: top.yTop - BLOCK_H,
+    this.current = {
+      phase: "aim",
+      x: WORLD_W / 2,
+      y: this.top.yTop - DROP_H,
+      w: FLOOR_W,
+      vy: 0,
+      swingT: this.height % 2 ? Math.PI : 0,   // alternate which side it starts from
       hue: this._hueFor(this.height + 1),
-      dir: fromLeft ? 1 : -1,
     };
-    this.speed = Math.min(MAX_SPEED, BASE_SPEED + this.height * SPEED_STEP);
   }
 
   step(dt) {
-    if (this.state !== "playing" || !this.moving) return;
-    const m = this.moving;
-    m.cx += m.dir * this.speed * dt;
-    const lo = m.w / 2, hi = WORLD_W - m.w / 2;
-    if (m.cx <= lo) { m.cx = lo; m.dir = 1; }
-    else if (m.cx >= hi) { m.cx = hi; m.dir = -1; }
+    if (this.state !== "playing" || !this.current) return;
+    const c = this.current;
+    if (c.phase === "aim") {
+      c.swingT += this._swingSpeed() * dt;
+      const amp = this._amp();
+      const half = c.w / 2 + 6;
+      c.x = Math.max(half, Math.min(WORLD_W - half, WORLD_W / 2 + Math.sin(c.swingT) * amp));
+      c.y = this.top.yTop - DROP_H;            // stay at drop height as the tower grows
+    } else { // falling
+      c.vy += G * dt;
+      c.y += c.vy * dt;
+      const landY = this.top.yTop - BLOCK_H;
+      if (c.y >= landY) { c.y = landY; this._land(); }
+    }
   }
 
-  // Drop the moving section for player `id`. In co-op only the player whose turn
-  // it is may drop. Returns true if a drop was processed.
+  // Drop the live section for player `id` (co-op: only on your turn).
   drop(id = 0) {
-    if (this.state !== "playing" || !this.moving) return false;
+    if (this.state !== "playing" || !this.current || this.current.phase !== "aim") return false;
     if (this.numPlayers === 2 && id !== this.turn) return false;
+    this.current.phase = "fall";
+    this.current.by = id;
+    this.dispatchEvent(new CustomEvent("release"));
+    return true;
+  }
 
-    const m = this.moving;
-    const top = this.top;
-    const left = Math.max(top.cx - top.w / 2, m.cx - m.w / 2);
-    const right = Math.min(top.cx + top.w / 2, m.cx + m.w / 2);
-    const overlap = right - left;
+  _land() {
+    const c = this.current;
+    const below = this.top;
+    const dxBelow = c.x - below.cx;
 
-    // Total miss → topple.
-    if (overlap <= 0) {
-      this.moving = null;
-      this.state = "over";
-      this.dispatchEvent(new CustomEvent("miss", { detail: { cx: m.cx, w: m.w, yTop: m.yTop, hue: m.hue } }));
-      this.dispatchEvent(new CustomEvent("gameover", { detail: { score: this.score, height: this.height } }));
-      return true;
+    // Slid off the floor below → topple immediately.
+    if (Math.abs(dxBelow) > SLIP) {
+      this._topple(Math.sign(dxBelow) || 1, c);
+      return;
     }
 
-    const perfect = Math.abs(m.cx - top.cx) <= PERFECT_EPS;
-    const cuts = [];
-    let placed;
-
-    if (perfect) {
-      // Snap, keep full width, build a combo.
-      placed = { cx: top.cx, w: top.w, yTop: m.yTop, hue: m.hue };
-      this.combo += 1;
-      this.score += 10 + this.combo * 5;
-    } else {
-      this.combo = 0;
-      placed = { cx: (left + right) / 2, w: overlap, yTop: m.yTop, hue: m.hue };
-      this.score += 10;
-      // Overhang piece(s) that get sliced off and fall.
-      const ml = m.cx - m.w / 2, mr = m.cx + m.w / 2;
-      if (ml < left) cuts.push({ cx: (ml + left) / 2, w: left - ml, yTop: m.yTop, hue: m.hue, vx: -120 });
-      if (mr > right) cuts.push({ cx: (right + mr) / 2, w: mr - right, yTop: m.yTop, hue: m.hue, vx: 120 });
-    }
-
+    const placed = { cx: c.x, w: c.w, yTop: c.y, hue: c.hue };
     this.blocks.push(placed);
     this.height += 1;
+
+    const perfect = Math.abs(dxBelow) <= PERFECT_EPS;
+    if (perfect) { this.combo += 1; this.score += 10 + this.combo * 5; }
+    else { this.combo = 0; this.score += 10; }
+
+    // Recompute the building's lean from the centre of mass of every floor.
+    let sum = 0;
+    for (const b of this.blocks) sum += b.cx;
+    this.drift = sum / this.blocks.length - WORLD_W / 2;
+    this.leanFrac = Math.max(-1, Math.min(1, this.drift / MAX_DRIFT));
+
     if (this.numPlayers === 2) this.turn = (this.turn + 1) % this.numPlayers;
-    this.dispatchEvent(new CustomEvent("drop", { detail: { perfect, combo: this.combo, cuts, by: id } }));
+    this.dispatchEvent(new CustomEvent("place", { detail: { perfect, combo: this.combo, dxBelow } }));
+
+    // Centre of mass wandered past what the base can hold → it keels over.
+    if (Math.abs(this.drift) > MAX_DRIFT) {
+      this._topple(Math.sign(this.drift), null);
+      return;
+    }
     this._spawn();
-    return true;
+  }
+
+  _topple(dir, fallingPiece) {
+    this.current = null;
+    this.state = "over";
+    this.dispatchEvent(new CustomEvent("topple", { detail: { dir, piece: fallingPiece } }));
+    this.dispatchEvent(new CustomEvent("gameover", { detail: { score: this.score, height: this.height } }));
   }
 }

@@ -4,10 +4,10 @@
 // (idle → playing → paused → over). The engine owns all game logic; this file
 // is input + render only.
 
-import { Engine, COLS, ROWS } from "./engine.js?v=1051ccaa-4f04-451e-bb60-4005e2490f2f";
-import { Input } from "../assets/js/shared/input.js?v=1051ccaa-4f04-451e-bb60-4005e2490f2f";
-import { makeButton } from "../assets/js/shared/touch.js?v=1051ccaa-4f04-451e-bb60-4005e2490f2f";
-import { Sound } from "../assets/js/shared/sound.js?v=1051ccaa-4f04-451e-bb60-4005e2490f2f";
+import { Engine, COLS, ROWS } from "./engine.js?v=36cab9b8-1f60-4318-ac58-33473316838a";
+import { Input } from "../assets/js/shared/input.js?v=36cab9b8-1f60-4318-ac58-33473316838a";
+import { makeButton } from "../assets/js/shared/touch.js?v=36cab9b8-1f60-4318-ac58-33473316838a";
+import { Sound } from "../assets/js/shared/sound.js?v=36cab9b8-1f60-4318-ac58-33473316838a";
 
 // Palette: the head is brighter than the body so the heading reads at a glance.
 const HEAD = "#7cffc4";
