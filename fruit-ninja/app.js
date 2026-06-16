@@ -7,9 +7,9 @@
 //
 // This file is input + render only — match the tetris/app.js conventions.
 
-import { Engine, makeRng, WIDTH, HEIGHT, FRUIT_COLORS } from "./engine.js?v=a725a0c4-61c4-4d87-adb5-ebd964557ae6";
-import { Input } from "../assets/js/shared/input.js?v=a725a0c4-61c4-4d87-adb5-ebd964557ae6";
-import { Sound } from "../assets/js/shared/sound.js?v=a725a0c4-61c4-4d87-adb5-ebd964557ae6";
+import { Engine, makeRng, WIDTH, HEIGHT, FRUIT_COLORS } from "./engine.js?v=7b2cdffe-f8e1-40d5-9f35-794a00b45727";
+import { Input } from "../assets/js/shared/input.js?v=7b2cdffe-f8e1-40d5-9f35-794a00b45727";
+import { Sound } from "../assets/js/shared/sound.js?v=7b2cdffe-f8e1-40d5-9f35-794a00b45727";
 
 const engine = new Engine(makeRng(Date.now() >>> 0));
 const input = new Input();
