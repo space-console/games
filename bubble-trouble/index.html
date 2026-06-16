@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- TV browsers default to a desktop-width viewport; pin to device width and lock zoom for the 10-foot UI. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#05060f" />
+  <title>Bubble Trouble — Space Console</title>
+  <link rel="manifest" href="../manifest.json" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- safe-area wrapper protects against TV overscan; see --safe-* in base.css -->
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <a href="../" aria-label="Back to games">
+          <span class="brand__mark" aria-hidden="true"></span>
+          <span class="brand__name">Bubble Trouble</span>
+        </a>
+      </div>
+      <div class="topbar__hint" id="status" aria-live="polite">Press Enter to start</div>
+      <button class="mute" id="mute" type="button" aria-pressed="false" aria-label="Toggle sound" title="Toggle sound (M)">🔊</button>
+    </header>
+
+    <main class="stage">
+      <!-- Playfield: a 4:3 landscape room -->
+      <section class="board" aria-label="Playfield">
+        <canvas id="board" width="640" height="480"></canvas>
+        <!-- Overlay: start menu / game-over messaging -->
+        <div class="overlay" id="overlay">
+          <div class="overlay__card">
+            <h1 class="overlay__title" id="overlayTitle">Bubble Trouble</h1>
+            <p class="overlay__msg" id="overlayMsg">Pop every bubble to clear the level!</p>
+            <div class="menu">
+              <button class="mbtn mbtn--p1" id="btn1p" type="button" data-touch-ignore>1 Player</button>
+              <button class="mbtn mbtn--p2" id="btn2p" type="button" data-touch-ignore>2 Players</button>
+            </div>
+            <p class="menu__keys">
+              <span><b>P1</b> <kbd>←</kbd><kbd>→</kbd> move · <kbd>Space</kbd>/<kbd>↑</kbd> shoot</span>
+              <span><b>P2</b> <kbd>A</kbd><kbd>D</kbd> move · <kbd>W</kbd> shoot</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Side panel: scoreboard -->
+      <aside class="panel" aria-label="Game info">
+        <dl class="scoreboard">
+          <div class="score"><dt>Score</dt><dd id="score">0</dd></div>
+          <div class="score"><dt>Best</dt><dd id="best">0</dd></div>
+          <div class="score"><dt>Level</dt><dd id="level">1</dd></div>
+        </dl>
+
+        <!-- On-screen controls (touch devices only) -->
+        <div class="touch-controls touch-only" id="touchControls" aria-hidden="true">
+          <button class="tbtn" id="btnLeft" type="button" data-touch-ignore aria-label="Move left">◀</button>
+          <button class="tbtn tbtn--fire" id="btnFire" type="button" data-touch-ignore aria-label="Shoot">▲</button>
+          <button class="tbtn" id="btnRight" type="button" data-touch-ignore aria-label="Move right">▶</button>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="hintbar" id="hintbar">
+      <span class="hint"><kbd class="key">← →</kbd> P1 Move</span>
+      <span class="hint"><kbd class="key">Space</kbd> P1 Shoot</span>
+      <span class="hint"><kbd class="key">A D</kbd> P2 Move</span>
+      <span class="hint"><kbd class="key">W</kbd> P2 Shoot</span>
+      <span class="hint"><kbd class="key">Back</kbd> Menu</span>
+      <span class="hint"><kbd class="key">M</kbd> Mute</span>
+    </footer>
+  </div>
+
+  <script type="module" src="./app.js?v=1051ccaa-4f04-451e-bb60-4005e2490f2f"></script>
+</body>
+</html>
