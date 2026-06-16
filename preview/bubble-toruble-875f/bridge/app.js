@@ -20,9 +20,9 @@ import {
   newAuction, isLegalCall, applyCall,
   startPlay, ledSuit, isLegalPlay, legalPlays, playCard,
   scoreContract, contractLabel,
-} from "./engine.js?v=6935de02-d58f-4b4a-b7ac-1f40408f7aaa";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=6935de02-d58f-4b4a-b7ac-1f40408f7aaa";
-import { Sound } from "../assets/js/shared/sound.js?v=6935de02-d58f-4b4a-b7ac-1f40408f7aaa";
+} from "./engine.js?v=56079df5-32d5-4a3d-ba0b-46c7935702b5";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=56079df5-32d5-4a3d-ba0b-46c7935702b5";
+import { Sound } from "../assets/js/shared/sound.js?v=56079df5-32d5-4a3d-ba0b-46c7935702b5";
 
 const input = new Input();
 const sound = new Sound();
