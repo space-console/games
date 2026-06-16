@@ -55,6 +55,7 @@ const INCLUDE = [
   "icy-tower",
   "space-tower",
   "imposter",
+  "star-hopper",
 ];
 
 const version = randomUUID();
