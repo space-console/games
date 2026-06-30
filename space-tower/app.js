@@ -12,9 +12,9 @@ import {
   Engine,
   WORLD_W, WORLD_H, BLOCK_H, BASE_Y,
   DROP_H, PIVOT_UP,
-} from "./engine.js?v=e694fea3-0d54-416b-b337-6ed4e1a4a5ef";
-import { Input } from "../assets/js/shared/input.js?v=e694fea3-0d54-416b-b337-6ed4e1a4a5ef";
-import { Sound } from "../assets/js/shared/sound.js?v=e694fea3-0d54-416b-b337-6ed4e1a4a5ef";
+} from "./engine.js?v=f4e4e8d6-32aa-475e-b4ae-62edda0de0b7";
+import { Input } from "../assets/js/shared/input.js?v=f4e4e8d6-32aa-475e-b4ae-62edda0de0b7";
+import { Sound } from "../assets/js/shared/sound.js?v=f4e4e8d6-32aa-475e-b4ae-62edda0de0b7";
 
 const engine = new Engine(Math.random);
 const input = new Input();
