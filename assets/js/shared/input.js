@@ -47,7 +47,11 @@ export class Input {
     this._onKeyUp = this._onKeyUp.bind(this);
     this._onTouchStart = this._onTouchStart.bind(this);
     this._onTouchEnd = this._onTouchEnd.bind(this);
+    this._onParentMessage = this._onParentMessage.bind(this);
     this._poll = this._poll.bind(this);
+    // True when this game runs inside the launcher's persistent shell (iframe),
+    // which relays phone-controller intents in via postMessage.
+    this.embedded = window.parent !== window;
   }
 
   /** Subscribe to intents. handler(intent: string) => void. Returns unsubscribe. */
@@ -71,7 +75,19 @@ export class Input {
     window.addEventListener("touchend", this._onTouchEnd, { passive: true });
     if (isTouchDevice()) document.documentElement.classList.add("touch");
     if ("getGamepads" in navigator) requestAnimationFrame(this._poll);
+    // When embedded in the launcher shell, accept controller intents the shell
+    // relays from the phone over WebRTC — same intent stream as keys/pad/touch.
+    if (this.embedded) window.addEventListener("message", this._onParentMessage);
     return this;
+  }
+
+  // Launcher shell → game: { type: "sc:intent", intent }. Inject as if locally
+  // pressed so the game stays a pure consumer of the intent stream.
+  _onParentMessage(e) {
+    const msg = e.data;
+    if (msg && msg.type === "sc:intent" && typeof msg.intent === "string") {
+      this._emit(msg.intent);
+    }
   }
 
   _emit(intent) {
