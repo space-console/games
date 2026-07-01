@@ -16,6 +16,7 @@
 import { World, WIDTH, HEIGHT, FIXED_DT, BALL_R, FLIP_W } from "./engine.js";
 import { Input } from "../assets/js/shared/input.js";
 import { Sound } from "../assets/js/shared/sound.js";
+import { Controls } from "../assets/js/shared/controls.js";
 
 const world = new World();
 const input = new Input();
@@ -88,12 +89,26 @@ function gameOver() {
   setStatus("Game over");
 }
 
-// ---- Discrete intents (start / launch / hub) -------------------------------
+// ---- Intents (start / launch / hub + phone-controller flippers) ------------
+// A phone controller can't press physical keys, so flippers arrive as the
+// declared button intents below (see the Controls.define in boot). `hold`
+// buttons send `<id>` on press and `<id>:release` on release.
+function launchOrStart() {
+  if (state === "idle" || state === "over") startGame();
+  else launch();
+}
 input.on((intent) => {
-  if (intent === "back") { location.href = "../"; return; }
-  if (intent === "enter") {
-    if (state === "idle" || state === "over") startGame();
-    else if (state === "playing") launch();
+  switch (intent) {
+    case "back": location.href = "../"; return;
+    case "enter":
+      if (state === "idle" || state === "over") startGame();
+      else if (state === "playing") launch();
+      return;
+    case "launch": launchOrStart(); return;
+    case "flip-left": raiseFlipper(-1); return;
+    case "flip-left:release": lowerFlipper(-1); return;
+    case "flip-right": raiseFlipper(1); return;
+    case "flip-right:release": lowerFlipper(1); return;
   }
 });
 
@@ -514,6 +529,15 @@ function buildTouchControls() {
 // ---- Boot ------------------------------------------------------------------
 function boot() {
   input.start();          // adds <html>.touch + gesture layer; supplies intents
+  // Tell the phone controller to show flippers + launch instead of the d-pad.
+  Controls.define({
+    profile: "buttons",
+    buttons: [
+      { id: "flip-left", label: "◀ Flip", hold: true },
+      { id: "launch", label: "Launch" },
+      { id: "flip-right", label: "Flip ▶", hold: true },
+    ],
+  });
   buildTouchControls();
   els.mute.addEventListener("click", toggleMute);
   renderMute();
