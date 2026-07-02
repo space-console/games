@@ -19,6 +19,7 @@ import {
 } from "./engine.js";
 import { Input } from "../assets/js/shared/input.js";
 import { Sound } from "../assets/js/shared/sound.js";
+import { Controls } from "../assets/js/shared/controls.js";
 
 const engine = new Engine(Math.random);
 const input = new Input();
@@ -100,12 +101,20 @@ engine.addEventListener("gameover", () => {
 });
 
 // ---- Input ----------------------------------------------------------------
+// A phone controller sends held ◀ / ▶ + Fire as the intents below (see the
+// Controls.define in boot); they drive P1's held-move state / fire.
 input.on((intent) => {
-  if (intent === "back") { location.href = "../"; return; }
-  // A remote/tap "enter" starts a 1-player game or fires P1.
-  if (intent === "enter") {
-    if (idleOrOver()) startGame(1);
-    else { sound.resume(); engine.fire(0); }
+  switch (intent) {
+    case "back": location.href = "../"; return;
+    // "enter"/Fire starts a 1-player game or fires P1.
+    case "enter":
+      if (idleOrOver()) startGame(1);
+      else { sound.resume(); engine.fire(0); }
+      return;
+    case "left": held[0].left = true; return;
+    case "left:release": held[0].left = false; return;
+    case "right": held[0].right = true; return;
+    case "right:release": held[0].right = false; return;
   }
 });
 
@@ -495,6 +504,15 @@ function toggleMute() { sound.toggleMute(); renderMute(); }
 // ---- Boot -----------------------------------------------------------------
 function boot() {
   input.start();
+  // Phone controller: hold ◀ / ▶ to move, Fire to shoot.
+  Controls.define({
+    profile: "buttons",
+    buttons: [
+      { id: "left", label: "◀", hold: true },
+      { id: "enter", label: "Fire" },
+      { id: "right", label: "▶", hold: true },
+    ],
+  });
   els.best.textContent = best;
   els.mute.addEventListener("click", toggleMute);
   window.addEventListener("keydown", (e) => { if (e.key === "m" || e.key === "M") toggleMute(); });

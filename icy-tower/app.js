@@ -16,6 +16,7 @@ import {
 } from "./engine.js";
 import { Input } from "../assets/js/shared/input.js";
 import { Sound } from "../assets/js/shared/sound.js";
+import { Controls } from "../assets/js/shared/controls.js";
 
 const engine = new Engine(Math.random);
 const input = new Input();
@@ -101,11 +102,24 @@ function spawnPopup(text, x, y, color, size) {
 }
 
 // ---- Input ----------------------------------------------------------------
+// A phone controller sends held ◀ / ▶ / Jump as the intents below (see the
+// Controls.define in boot); they set the same `held` object as keyboard/touch.
 input.on((intent) => {
-  if (intent === "back") { location.href = "../"; return; }
-  if (intent === "enter") {
-    if (idleOrOver()) startGame();
-    else { sound.resume(); engine.jump(); }
+  switch (intent) {
+    case "back": location.href = "../"; return;
+    case "enter":
+      if (idleOrOver()) startGame();
+      else { sound.resume(); engine.jump(); }
+      return;
+    case "jump":
+      if (idleOrOver()) { startGame(); return; }
+      sound.resume(); held.jump = true; engine.jump();
+      return;
+    case "jump:release": held.jump = false; return;
+    case "left": held.left = true; return;
+    case "left:release": held.left = false; return;
+    case "right": held.right = true; return;
+    case "right:release": held.right = false; return;
   }
 });
 
@@ -457,6 +471,15 @@ function toggleMute() { sound.toggleMute(); renderMute(); }
 // ---- Boot -----------------------------------------------------------------
 function boot() {
   input.start();
+  // Phone controller: hold ◀ / ▶ to run, Jump to hop.
+  Controls.define({
+    profile: "buttons",
+    buttons: [
+      { id: "left", label: "◀", hold: true },
+      { id: "jump", label: "Jump", hold: true },
+      { id: "right", label: "▶", hold: true },
+    ],
+  });
   els.best.textContent = best;
   els.mute.addEventListener("click", toggleMute);
   window.addEventListener("keydown", (e) => { if (e.key === "m" || e.key === "M") toggleMute(); });
