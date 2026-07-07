@@ -12,6 +12,7 @@ import {
 } from "./engine.js";
 import { Input } from "../assets/js/shared/input.js";
 import { Sound } from "../assets/js/shared/sound.js";
+import { Controls } from "../assets/js/shared/controls.js";
 
 // Browser play wants variety, so feed the engine Math.random rather than the
 // deterministic default seed.
@@ -313,6 +314,8 @@ function toggleMute() {
 // ---- Boot -----------------------------------------------------------------
 function boot() {
   input.start();
+  // Phone controller: one big Flap (also starts the game).
+  Controls.define({ profile: "buttons", buttons: [{ id: "enter", label: "Flap" }] });
   els.best.textContent = best;
 
   els.mute.addEventListener("click", toggleMute);

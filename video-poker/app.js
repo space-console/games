@@ -16,6 +16,7 @@ import {
 import { Input, isTouchDevice } from "../assets/js/shared/input.js";
 import { mountButtons } from "../assets/js/shared/touch.js";
 import { Sound } from "../assets/js/shared/sound.js";
+import { Controls } from "../assets/js/shared/controls.js";
 
 const engine = new Engine();
 const input = new Input();
@@ -323,6 +324,16 @@ function boot() {
   dealDrawBtn = els.controls.querySelector(".ctl--primary");
 
   input.start();
+  // Phone controller: ◀ ▶ pick a card, Hold toggles it, Deal deals/draws.
+  Controls.define({
+    profile: "buttons",
+    buttons: [
+      { id: "left", label: "◀" },
+      { id: "right", label: "▶" },
+      { id: "up", label: "Hold" },
+      { id: "enter", label: "Deal" },
+    ],
+  });
   els.mute.addEventListener("click", toggleMute);
   window.addEventListener("keydown", (e) => {
     if (e.key === "m" || e.key === "M") toggleMute();

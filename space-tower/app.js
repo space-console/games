@@ -15,6 +15,7 @@ import {
 } from "./engine.js";
 import { Input } from "../assets/js/shared/input.js";
 import { Sound } from "../assets/js/shared/sound.js";
+import { Controls } from "../assets/js/shared/controls.js";
 
 const engine = new Engine(Math.random);
 const input = new Input();
@@ -460,6 +461,8 @@ function toggleMute() { sound.toggleMute(); renderMute(); }
 
 function boot() {
   input.start();
+  // Phone controller: one big Drop (also starts the game).
+  Controls.define({ profile: "buttons", buttons: [{ id: "enter", label: "Drop" }] });
   els.best.textContent = best;
   els.mute.addEventListener("click", toggleMute);
   window.addEventListener("keydown", (e) => { if (e.key === "m" || e.key === "M") toggleMute(); });
