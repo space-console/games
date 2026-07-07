@@ -7,6 +7,7 @@
 import { Engine } from "./engine.js";
 import { Input, isTouchDevice } from "../assets/js/shared/input.js";
 import { Sound } from "../assets/js/shared/sound.js";
+import { Controls } from "../assets/js/shared/controls.js";
 
 // Difficulty presets. Expert is wide — the board scrolls horizontally on small
 // screens (see .board__scroll in style.css) so it never overflows the layout.
@@ -195,6 +196,7 @@ input.on((intent) => {
       case "up": cursor = (cursor - cols + n) % n; break;
       case "down": cursor = (cursor + cols) % n; break;
       case "enter": revealAt(cursor); return;
+      case "flag": flagAt(cursor); return;
       case "back": location.href = "../"; return;
     }
     draw();
@@ -300,6 +302,15 @@ function toggleMute() {
 // ---- Boot -----------------------------------------------------------------
 function boot() {
   input.start();
+
+  // Phone controller: d-pad moves the cursor; add Reveal + Flag actions.
+  Controls.define({
+    profile: "dpad",
+    buttons: [
+      { id: "enter", label: "Reveal" },
+      { id: "flag", label: "🚩 Flag" },
+    ],
+  });
 
   els.newGame.addEventListener("click", newGame);
   els.flagMode.addEventListener("click", toggleFlagMode);

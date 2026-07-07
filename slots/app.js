@@ -16,6 +16,7 @@ import {
 import { Input, isTouchDevice } from "../assets/js/shared/input.js";
 import { mountButtons } from "../assets/js/shared/touch.js";
 import { Sound } from "../assets/js/shared/sound.js";
+import { Controls } from "../assets/js/shared/controls.js";
 
 const engine = new Engine();
 const input = new Input();
@@ -324,6 +325,15 @@ function boot() {
   spinBtn = els.controls.querySelector(".ctl--primary");
 
   input.start();
+  // Phone controller: labeled bet + spin (maps to the existing up/down/enter).
+  Controls.define({
+    profile: "buttons",
+    buttons: [
+      { id: "up", label: "Bet +1" },
+      { id: "enter", label: "Spin" },
+      { id: "down", label: "Max Bet" },
+    ],
+  });
   els.mute.addEventListener("click", toggleMute);
   window.addEventListener("keydown", (e) => {
     if (e.key === "m" || e.key === "M") toggleMute();

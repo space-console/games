@@ -17,6 +17,7 @@ import {
 import { Input, isTouchDevice } from "../assets/js/shared/input.js";
 import { mountButtons } from "../assets/js/shared/touch.js";
 import { Sound } from "../assets/js/shared/sound.js";
+import { Controls } from "../assets/js/shared/controls.js";
 
 const engine = new Engine();
 const input = new Input();
@@ -380,6 +381,17 @@ function boot() {
   [btn.hit, btn.stand, btn.double, btn.split, btn.betOne, btn.betMax, btn.deal] = buttons;
 
   input.start();
+  // Phone controller: labeled casino actions (directions only fire in the player
+  // phase; Enter deals when betting and hits in play — hence "Deal / Hit").
+  Controls.define({
+    profile: "buttons",
+    buttons: [
+      { id: "enter", label: "Deal / Hit" },
+      { id: "down", label: "Stand" },
+      { id: "left", label: "Double" },
+      { id: "right", label: "Split" },
+    ],
+  });
   els.mute.addEventListener("click", toggleMute);
   window.addEventListener("keydown", (e) => {
     const k = e.key.toLowerCase();
