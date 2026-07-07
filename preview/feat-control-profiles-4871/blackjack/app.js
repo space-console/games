@@ -13,10 +13,11 @@ import {
   rankLabel,
   handValue,
   MIN_BET,
-} from "./engine.js?v=2b6df246-9995-44ee-80dc-e16ace68fbcf";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=2b6df246-9995-44ee-80dc-e16ace68fbcf";
-import { mountButtons } from "../assets/js/shared/touch.js?v=2b6df246-9995-44ee-80dc-e16ace68fbcf";
-import { Sound } from "../assets/js/shared/sound.js?v=2b6df246-9995-44ee-80dc-e16ace68fbcf";
+} from "./engine.js?v=52b25a6a-011c-43d9-ac43-9c0620f7395c";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=52b25a6a-011c-43d9-ac43-9c0620f7395c";
+import { mountButtons } from "../assets/js/shared/touch.js?v=52b25a6a-011c-43d9-ac43-9c0620f7395c";
+import { Sound } from "../assets/js/shared/sound.js?v=52b25a6a-011c-43d9-ac43-9c0620f7395c";
+import { Controls } from "../assets/js/shared/controls.js?v=52b25a6a-011c-43d9-ac43-9c0620f7395c";
 
 const engine = new Engine();
 const input = new Input();
@@ -380,6 +381,17 @@ function boot() {
   [btn.hit, btn.stand, btn.double, btn.split, btn.betOne, btn.betMax, btn.deal] = buttons;
 
   input.start();
+  // Phone controller: labeled casino actions (directions only fire in the player
+  // phase; Enter deals when betting and hits in play — hence "Deal / Hit").
+  Controls.define({
+    profile: "buttons",
+    buttons: [
+      { id: "enter", label: "Deal / Hit" },
+      { id: "down", label: "Stand" },
+      { id: "left", label: "Double" },
+      { id: "right", label: "Split" },
+    ],
+  });
   els.mute.addEventListener("click", toggleMute);
   window.addEventListener("keydown", (e) => {
     const k = e.key.toLowerCase();
