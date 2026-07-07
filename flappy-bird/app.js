@@ -9,9 +9,10 @@ import {
   WORLD_W, WORLD_H,
   BIRD_X, BIRD_R,
   PIPE_W, FLOOR_Y, GROUND_H,
-} from "./engine.js?v=e89a9f95-2c93-4908-b25d-f3408118313e";
-import { Input } from "../assets/js/shared/input.js?v=e89a9f95-2c93-4908-b25d-f3408118313e";
-import { Sound } from "../assets/js/shared/sound.js?v=e89a9f95-2c93-4908-b25d-f3408118313e";
+} from "./engine.js?v=2372e5f9-2998-4d19-b4c2-053ee870833d";
+import { Input } from "../assets/js/shared/input.js?v=2372e5f9-2998-4d19-b4c2-053ee870833d";
+import { Sound } from "../assets/js/shared/sound.js?v=2372e5f9-2998-4d19-b4c2-053ee870833d";
+import { Controls } from "../assets/js/shared/controls.js?v=2372e5f9-2998-4d19-b4c2-053ee870833d";
 
 // Browser play wants variety, so feed the engine Math.random rather than the
 // deterministic default seed.
@@ -313,6 +314,8 @@ function toggleMute() {
 // ---- Boot -----------------------------------------------------------------
 function boot() {
   input.start();
+  // Phone controller: one big Flap (also starts the game).
+  Controls.define({ profile: "buttons", buttons: [{ id: "enter", label: "Flap" }] });
   els.best.textContent = best;
 
   els.mute.addEventListener("click", toggleMute);

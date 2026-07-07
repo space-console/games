@@ -12,9 +12,10 @@ import {
   Engine,
   WORLD_W, WORLD_H, BLOCK_H, BASE_Y,
   DROP_H, PIVOT_UP,
-} from "./engine.js?v=e89a9f95-2c93-4908-b25d-f3408118313e";
-import { Input } from "../assets/js/shared/input.js?v=e89a9f95-2c93-4908-b25d-f3408118313e";
-import { Sound } from "../assets/js/shared/sound.js?v=e89a9f95-2c93-4908-b25d-f3408118313e";
+} from "./engine.js?v=2372e5f9-2998-4d19-b4c2-053ee870833d";
+import { Input } from "../assets/js/shared/input.js?v=2372e5f9-2998-4d19-b4c2-053ee870833d";
+import { Sound } from "../assets/js/shared/sound.js?v=2372e5f9-2998-4d19-b4c2-053ee870833d";
+import { Controls } from "../assets/js/shared/controls.js?v=2372e5f9-2998-4d19-b4c2-053ee870833d";
 
 const engine = new Engine(Math.random);
 const input = new Input();
@@ -460,6 +461,8 @@ function toggleMute() { sound.toggleMute(); renderMute(); }
 
 function boot() {
   input.start();
+  // Phone controller: one big Drop (also starts the game).
+  Controls.define({ profile: "buttons", buttons: [{ id: "enter", label: "Drop" }] });
   els.best.textContent = best;
   els.mute.addEventListener("click", toggleMute);
   window.addEventListener("keydown", (e) => { if (e.key === "m" || e.key === "M") toggleMute(); });

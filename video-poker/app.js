@@ -12,10 +12,11 @@ import {
   SUIT_GLYPH,
   RED_SUITS,
   rankLabel,
-} from "./engine.js?v=e89a9f95-2c93-4908-b25d-f3408118313e";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=e89a9f95-2c93-4908-b25d-f3408118313e";
-import { mountButtons } from "../assets/js/shared/touch.js?v=e89a9f95-2c93-4908-b25d-f3408118313e";
-import { Sound } from "../assets/js/shared/sound.js?v=e89a9f95-2c93-4908-b25d-f3408118313e";
+} from "./engine.js?v=2372e5f9-2998-4d19-b4c2-053ee870833d";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=2372e5f9-2998-4d19-b4c2-053ee870833d";
+import { mountButtons } from "../assets/js/shared/touch.js?v=2372e5f9-2998-4d19-b4c2-053ee870833d";
+import { Sound } from "../assets/js/shared/sound.js?v=2372e5f9-2998-4d19-b4c2-053ee870833d";
+import { Controls } from "../assets/js/shared/controls.js?v=2372e5f9-2998-4d19-b4c2-053ee870833d";
 
 const engine = new Engine();
 const input = new Input();
@@ -323,6 +324,16 @@ function boot() {
   dealDrawBtn = els.controls.querySelector(".ctl--primary");
 
   input.start();
+  // Phone controller: ◀ ▶ pick a card, Hold toggles it, Deal deals/draws.
+  Controls.define({
+    profile: "buttons",
+    buttons: [
+      { id: "left", label: "◀" },
+      { id: "right", label: "▶" },
+      { id: "up", label: "Hold" },
+      { id: "enter", label: "Deal" },
+    ],
+  });
   els.mute.addEventListener("click", toggleMute);
   window.addEventListener("keydown", (e) => {
     if (e.key === "m" || e.key === "M") toggleMute();

@@ -4,9 +4,10 @@
 // counters, and manages game state (idle → playing → won/lost). The engine owns
 // all board logic; this file is input + render + the clock only.
 
-import { Engine } from "./engine.js?v=e89a9f95-2c93-4908-b25d-f3408118313e";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=e89a9f95-2c93-4908-b25d-f3408118313e";
-import { Sound } from "../assets/js/shared/sound.js?v=e89a9f95-2c93-4908-b25d-f3408118313e";
+import { Engine } from "./engine.js?v=2372e5f9-2998-4d19-b4c2-053ee870833d";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=2372e5f9-2998-4d19-b4c2-053ee870833d";
+import { Sound } from "../assets/js/shared/sound.js?v=2372e5f9-2998-4d19-b4c2-053ee870833d";
+import { Controls } from "../assets/js/shared/controls.js?v=2372e5f9-2998-4d19-b4c2-053ee870833d";
 
 // Difficulty presets. Expert is wide — the board scrolls horizontally on small
 // screens (see .board__scroll in style.css) so it never overflows the layout.
@@ -195,6 +196,7 @@ input.on((intent) => {
       case "up": cursor = (cursor - cols + n) % n; break;
       case "down": cursor = (cursor + cols) % n; break;
       case "enter": revealAt(cursor); return;
+      case "flag": flagAt(cursor); return;
       case "back": location.href = "../"; return;
     }
     draw();
@@ -300,6 +302,15 @@ function toggleMute() {
 // ---- Boot -----------------------------------------------------------------
 function boot() {
   input.start();
+
+  // Phone controller: d-pad moves the cursor; add Reveal + Flag actions.
+  Controls.define({
+    profile: "dpad",
+    buttons: [
+      { id: "enter", label: "Reveal" },
+      { id: "flag", label: "🚩 Flag" },
+    ],
+  });
 
   els.newGame.addEventListener("click", newGame);
   els.flagMode.addEventListener("click", toggleFlagMode);
