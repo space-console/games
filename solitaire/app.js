@@ -25,10 +25,10 @@ import {
   rankLabel,
   FOUNDATION_COUNT,
   TABLEAU_COUNT,
-} from "./engine.js?v=2372e5f9-2998-4d19-b4c2-053ee870833d";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=2372e5f9-2998-4d19-b4c2-053ee870833d";
-import { mountButtons } from "../assets/js/shared/touch.js?v=2372e5f9-2998-4d19-b4c2-053ee870833d";
-import { Sound } from "../assets/js/shared/sound.js?v=2372e5f9-2998-4d19-b4c2-053ee870833d";
+} from "./engine.js?v=3455d277-5d3b-46c0-9ef6-c22203b74206";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=3455d277-5d3b-46c0-9ef6-c22203b74206";
+import { mountButtons } from "../assets/js/shared/touch.js?v=3455d277-5d3b-46c0-9ef6-c22203b74206";
+import { Sound } from "../assets/js/shared/sound.js?v=3455d277-5d3b-46c0-9ef6-c22203b74206";
 
 const engine = new Engine();
 const input = new Input();
