@@ -54,7 +54,13 @@ export class Input {
     this.embedded = window.parent !== window;
   }
 
-  /** Subscribe to intents. handler(intent: string) => void. Returns unsubscribe. */
+  /**
+   * Subscribe to intents. handler(intent: string, player: number) => void.
+   * `player` is the 1-based seat of the phone that sent it (P1, P2, …), so
+   * same-screen multiplayer games can route input per seat. Local input
+   * (keyboard / touch / gamepad) reports as player 1. Games that ignore the
+   * second arg behave exactly as before. Returns an unsubscribe function.
+   */
   on(handler) {
     this.handlers.add(handler);
     return () => this.handlers.delete(handler);
@@ -81,17 +87,27 @@ export class Input {
     return this;
   }
 
-  // Launcher shell → game: { type: "sc:intent", intent }. Inject as if locally
-  // pressed so the game stays a pure consumer of the intent stream.
+  // Launcher shell → game: { type: "sc:intent", intent, player }. Inject as if
+  // locally pressed so the game stays a pure consumer of the intent stream. The
+  // player slot rides along so same-screen multiplayer games know which seat.
   _onParentMessage(e) {
     const msg = e.data;
     if (msg && msg.type === "sc:intent" && typeof msg.intent === "string") {
-      this._emit(msg.intent);
+      this._emit(msg.intent, Number(msg.player) || 1);
     }
   }
 
-  _emit(intent) {
-    for (const h of this.handlers) h(intent);
+  _emit(intent, player = 1) {
+    // Inside the launcher shell, Back means "leave the game" — hand it to the
+    // shell so it returns to the menu with the session (and every controller
+    // link) intact, instead of the game navigating its own iframe away. The
+    // phone's Back is already shell-routed; this covers local keyboard/remote
+    // Back while the game iframe holds focus. Standalone, Back is unchanged.
+    if (this.embedded && intent === "back") {
+      window.parent.postMessage({ type: "sc:back" }, "*");
+      return;
+    }
+    for (const h of this.handlers) h(intent, player);
   }
 
   // ---- Touch: swipe → direction, tap → enter ------------------------------
