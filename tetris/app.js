@@ -8,6 +8,7 @@ import { Engine, COLS, ROWS } from "./engine.js";
 import { Input } from "../assets/js/shared/input.js";
 import { mountButtons } from "../assets/js/shared/touch.js";
 import { Sound } from "../assets/js/shared/sound.js";
+import { Stats } from "../assets/js/shared/stats.js";
 
 // Colours indexed by the engine's cell ids (1..7 = I O T S Z J L).
 const COLORS = [
@@ -86,6 +87,8 @@ function gameOver() {
   state = "over";
   showOverlay("Game Over", `Score ${engine.score} · Tap to play again`);
   setStatus("Game over");
+  // Report the final score for the leaderboard (no-op when played standalone).
+  Stats.score(engine.score);
 }
 
 engine.addEventListener("lock", () => sound.lock());
