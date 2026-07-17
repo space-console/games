@@ -1,0 +1,129 @@
+/* RC Rush — full-screen racer. The canvas fills the viewport; the HUD and
+   overlays float on top. Shared tokens come from ../assets/css/base.css. */
+
+html, body { overflow: hidden; height: 100%; background: #0a1410; }
+
+#view {
+  position: fixed; inset: 0;
+  width: 100vw; height: 100vh;
+  display: block;
+  touch-action: none;
+}
+
+/* ---- HUD ------------------------------------------------------------------ */
+.hud { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+.hud__cluster { position: absolute; display: flex; gap: calc(var(--u) * 1); align-items: center; }
+.hud__tl { top: var(--safe-y); left: var(--safe-x); }
+.hud__tr { top: var(--safe-y); right: var(--safe-x); }
+.hud__br { bottom: var(--safe-y); right: var(--safe-x); }
+
+.stat {
+  display: flex; flex-direction: column; align-items: center;
+  min-width: calc(var(--u) * 6);
+  padding: calc(var(--u) * 0.6) calc(var(--u) * 1.2);
+  background: rgba(8, 12, 26, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: calc(var(--u) * 1.2);
+  backdrop-filter: blur(6px);
+}
+.stat__k { font-size: 0.62em; letter-spacing: 0.18em; color: var(--text-dim); }
+.stat__v { font-size: 1.35em; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--text); }
+.stat__v b { color: var(--focus); }
+
+.iconbtn {
+  pointer-events: auto;
+  width: calc(var(--u) * 4); height: calc(var(--u) * 4);
+  border-radius: 50%;
+  background: rgba(8, 12, 26, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text); font-size: 1.1em; cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+
+.speedo {
+  display: flex; align-items: baseline; gap: 0.3em;
+  padding: calc(var(--u) * 0.6) calc(var(--u) * 1.6);
+  background: rgba(8, 12, 26, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: calc(var(--u) * 1.2);
+  backdrop-filter: blur(6px);
+}
+.speedo span { font-size: 2.2em; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--text); line-height: 1; }
+.speedo small { font-size: 0.7em; color: var(--text-dim); letter-spacing: 0.08em; }
+
+/* ---- Countdown ------------------------------------------------------------ */
+.count {
+  position: fixed; inset: 0; z-index: 8;
+  display: grid; place-items: center;
+  font-size: clamp(6em, 22vh, 16em); font-weight: 900;
+  color: #fff; text-shadow: 0 0 40px rgba(108, 224, 255, 0.7), 0 8px 30px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  animation: pop 220ms ease;
+}
+.count--go { color: var(--good); text-shadow: 0 0 50px rgba(56, 232, 160, 0.8); }
+@keyframes pop { from { transform: scale(1.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* ---- Overlays (start / results) ------------------------------------------ */
+.overlay {
+  position: fixed; inset: 0; z-index: 10;
+  display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 40%, rgba(6, 10, 22, 0.72), rgba(4, 6, 15, 0.9));
+  backdrop-filter: blur(5px);
+  transition: opacity 200ms ease;
+}
+.overlay.is-hidden { opacity: 0; pointer-events: none; }
+/* A class selector's display:grid would otherwise beat the [hidden] UA rule. */
+.overlay[hidden], .count[hidden] { display: none; }
+
+.card {
+  text-align: center;
+  padding: calc(var(--u) * 3) calc(var(--u) * 4);
+  background: rgba(14, 18, 40, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: calc(var(--u) * 2);
+  box-shadow: 0 calc(var(--u) * 2) calc(var(--u) * 6) rgba(0, 0, 0, 0.5);
+  max-width: min(92vw, 560px);
+}
+.card__badge {
+  display: inline-grid; place-items: center;
+  width: calc(var(--u) * 5); height: calc(var(--u) * 5);
+  margin-bottom: calc(var(--u) * 1);
+  border-radius: calc(var(--u) * 1.2);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  font-weight: 900; font-size: 1.2em; letter-spacing: 0.05em;
+  box-shadow: 0 0 calc(var(--u) * 2) rgba(79, 140, 255, 0.6);
+}
+.title {
+  font-size: clamp(2.4em, 6vw, 4.2em); font-weight: 900; letter-spacing: 0.02em; line-height: 1;
+  background: linear-gradient(135deg, #6ce0ff, #b14bff);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.sub { color: var(--text-dim); margin-top: calc(var(--u) * 1.4); font-size: 1.05em; }
+.sub--dim { font-size: 0.8em; opacity: 0.7; margin-top: calc(var(--u) * 1.2); }
+.keys { display: inline-block; margin-top: calc(var(--u) * 0.8); font-size: 0.9em; }
+.keys kbd {
+  display: inline-block; padding: 0.1em 0.5em; margin: 0 0.15em;
+  background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0.4em; font-family: inherit; color: var(--text);
+}
+.cta {
+  margin-top: calc(var(--u) * 2);
+  padding: calc(var(--u) * 1.1) calc(var(--u) * 3);
+  border: 0; border-radius: 999px; cursor: pointer;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff; font-family: inherit; font-size: 1.1em; font-weight: 700;
+  box-shadow: 0 calc(var(--u) * 0.6) calc(var(--u) * 2) rgba(79, 140, 255, 0.5);
+}
+.cta:hover { filter: brightness(1.08); }
+
+/* ---- Results -------------------------------------------------------------- */
+.results__list { list-style: none; margin: calc(var(--u) * 2) 0 0; display: flex; flex-direction: column; gap: calc(var(--u) * 0.7); }
+.results__list li {
+  display: flex; align-items: center; gap: calc(var(--u) * 1.2);
+  padding: calc(var(--u) * 0.7) calc(var(--u) * 1.4);
+  background: rgba(255, 255, 255, 0.04); border-radius: calc(var(--u) * 1);
+}
+.results__list li.is-you { background: rgba(108, 224, 255, 0.14); border: 1px solid rgba(108, 224, 255, 0.4); }
+.rl__pos { width: 2.4em; font-weight: 800; color: var(--text-dim); text-align: left; }
+.rl__dot { width: 0.9em; height: 0.9em; border-radius: 50%; }
+.rl__name { font-weight: 600; }
