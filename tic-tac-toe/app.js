@@ -4,11 +4,11 @@
 // game states (idle → playing → over). The engine owns all board logic; this
 // file is input + render only.
 
-import { Engine } from "./engine.js?v=3455d277-5d3b-46c0-9ef6-c22203b74206";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=3455d277-5d3b-46c0-9ef6-c22203b74206";
-import { Sound } from "../assets/js/shared/sound.js?v=3455d277-5d3b-46c0-9ef6-c22203b74206";
-import { Stats } from "../assets/js/shared/stats.js?v=3455d277-5d3b-46c0-9ef6-c22203b74206";
-import { Roster } from "../assets/js/shared/roster.js?v=3455d277-5d3b-46c0-9ef6-c22203b74206";
+import { Engine } from "./engine.js?v=6e689871-230e-48d7-8c28-6cc463831da0";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=6e689871-230e-48d7-8c28-6cc463831da0";
+import { Sound } from "../assets/js/shared/sound.js?v=6e689871-230e-48d7-8c28-6cc463831da0";
+import { Stats } from "../assets/js/shared/stats.js?v=6e689871-230e-48d7-8c28-6cc463831da0";
+import { Roster } from "../assets/js/shared/roster.js?v=6e689871-230e-48d7-8c28-6cc463831da0";
 
 const engine = new Engine();
 const input = new Input();
