@@ -8,34 +8,58 @@
   justify-content: center;
 }
 
-/* The board hosts the grid + the messaging overlay. */
+/* The board hosts the grid + the messaging overlay. Unlike the canvas games,
+   this is a DOM grid, so reset base.css's fixed 82vh frame and let the board
+   size to its grid — capped to the viewport so it never overruns the hint bar.
+   A min-width keeps the small Beginner field (and its overlay) from cramping. */
 .board {
   position: relative;
+  display: grid;
+  place-items: center;
+  height: auto;
+  max-height: min(78vh, 820px);
+  min-width: min(88vw, 360px);
   padding: calc(var(--u) * 1.2);
   background: var(--surface);
   border: 1px solid var(--surface-2);
   border-radius: var(--radius);
   max-width: min(96vw, 760px);
+  overflow: hidden;             /* keep the overlay + grid inside the rounded frame */
 }
 
-/* Horizontal scroll container so the wide Expert board never overflows the
-   layout on narrow screens; on desktop it simply fits. */
+/* Scroll container — a safety net if a board is still larger than its budget on
+   very small screens. With the fitted --tile below, it normally doesn't scroll. */
 .board__scroll {
   overflow: auto;
   max-width: 100%;
+  max-height: 100%;
   border-radius: calc(var(--radius) * 0.6);
 }
 
-/* The minefield: a CSS grid of square tiles. --cols/--rows + --tile (set per
-   media query) size every cell uniformly. */
+/* The minefield: a CSS grid of square tiles. app.js sets --cols/--rows per
+   difficulty; --tile is derived from them so the whole board fits BOTH the
+   width budget (beside the panel) and the height budget (between the top bar
+   and the hint bar). That way Expert (30 cols) no longer overflows and Beginner
+   isn't blown up — every difficulty fits without scrolling. */
 .grid {
+  --gap: 2px;
+  --tile: clamp(14px, min(
+      (min(94vw, 720px) - var(--u) * 2.4 - (var(--cols) - 1) * var(--gap)) / var(--cols),
+      (min(70vh, 680px) - (var(--rows) - 1) * var(--gap)) / var(--rows)
+    ), 34px);
   display: grid;
-  grid-template-columns: repeat(var(--cols), var(--tile, 34px));
-  grid-auto-rows: var(--tile, 34px);
-  gap: 2px;
+  grid-template-columns: repeat(var(--cols), var(--tile));
+  grid-auto-rows: var(--tile);
+  gap: var(--gap);
   background: var(--surface-2); /* shows through the gaps as grid lines */
-  --tile: clamp(20px, 4.6vmin, 34px);
 }
+
+/* Start / win / game-over overlay. The shared clamp(2em, 4vw, 4em) title is far
+   wider than the narrow Beginner field and was overflowing under the side panel;
+   scale it to the board and let it break rather than escape the frame. */
+.overlay__card { max-width: 100%; padding: calc(var(--u) * 1.4); }
+.overlay__title { font-size: clamp(1.1em, 2.2vw, 1.7em); overflow-wrap: break-word; }
+.overlay__msg { font-size: 0.95em; }
 
 .cell {
   display: grid;
