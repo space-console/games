@@ -17,13 +17,15 @@
   display: grid;
   place-items: center;
   height: auto;
-  max-height: min(78vh, 820px);
+  max-height: min(84vh, 940px);
   min-width: min(88vw, 360px);
   padding: calc(var(--u) * 1.2);
   background: var(--surface);
   border: 1px solid var(--surface-2);
   border-radius: var(--radius);
-  max-width: min(96vw, 760px);
+  /* Grow to fill the page width beside the panel — the grid's fitted --tile
+     keeps it from overrunning, so no artificial 760px cap. */
+  max-width: min(96vw, 1500px);
   overflow: hidden;             /* keep the overlay + grid inside the rounded frame */
 }
 
@@ -42,11 +44,11 @@
    and the hint bar). That way Expert (30 cols) no longer overflows and Beginner
    isn't blown up — every difficulty fits without scrolling. */
 .grid {
-  --gap: 2px;
-  --tile: clamp(14px, min(
-      (min(94vw, 720px) - var(--u) * 2.4 - (var(--cols) - 1) * var(--gap)) / var(--cols),
-      (min(70vh, 680px) - (var(--rows) - 1) * var(--gap)) / var(--rows)
-    ), 34px);
+  --gap: 3px;
+  --tile: clamp(18px, min(
+      (min(95vw - 300px, 1460px) - var(--u) * 2.4 - (var(--cols) - 1) * var(--gap)) / var(--cols),
+      (min(68vh, 720px) - (var(--rows) - 1) * var(--gap)) / var(--rows)
+    ), 56px);
   display: grid;
   grid-template-columns: repeat(var(--cols), var(--tile));
   grid-auto-rows: var(--tile);
