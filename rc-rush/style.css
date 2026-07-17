@@ -40,6 +40,21 @@ html, body { overflow: hidden; height: 100%; background: #0a1410; }
   backdrop-filter: blur(6px);
 }
 
+.hud__room {
+  position: absolute; top: var(--safe-y); left: 50%; transform: translateX(-50%);
+  padding: calc(var(--u) * 0.5) calc(var(--u) * 1.6);
+  background: rgba(8, 12, 26, 0.6); border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px; backdrop-filter: blur(6px);
+  font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; font-size: 0.85em; color: var(--focus);
+}
+.hud__br { flex-direction: column; align-items: flex-end; }
+.boost { display: flex; flex-direction: column; align-items: flex-end; gap: 0.2em; }
+.boost__k { font-size: 0.6em; letter-spacing: 0.18em; color: var(--text-dim); }
+.boost__bar {
+  width: calc(var(--u) * 11); height: calc(var(--u) * 1); border-radius: 999px;
+  background: rgba(8, 12, 26, 0.6); border: 1px solid rgba(255, 255, 255, 0.12); overflow: hidden;
+}
+.boost__fill { height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, #6ce0ff, #ffcf3f); transition: width 80ms linear; }
 .speedo {
   display: flex; align-items: baseline; gap: 0.3em;
   padding: calc(var(--u) * 0.6) calc(var(--u) * 1.6);
