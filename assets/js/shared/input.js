@@ -39,6 +39,7 @@ export function isTouchDevice() {
 export class Input {
   constructor() {
     this.handlers = new Set();
+    this.analogHandlers = new Set(); // subscribers to continuous {steer,throttle,brake} state
     this._held = new Set();      // intents currently held (keyboard), for edge + repeat
     this._timers = new Map();    // intent -> {delay, interval} timer handles
     this._gpPrev = {};
@@ -74,6 +75,18 @@ export class Input {
     this._emit(intent);
   }
 
+  /**
+   * Subscribe to continuous analog controller state (steering games). The phone's
+   * analog pad relays a steering track + gas/brake pedals as {steer, throttle,
+   * brake, handbrake} in the -1..1 / 0..1 ranges, tagged with the sender's seat.
+   * Games that only handle discrete intents can ignore this entirely.
+   * Returns an unsubscribe function.
+   */
+  onAnalog(handler) {
+    this.analogHandlers.add(handler);
+    return () => this.analogHandlers.delete(handler);
+  }
+
   start() {
     window.addEventListener("keydown", this._onKey);
     window.addEventListener("keyup", this._onKeyUp);
@@ -92,8 +105,18 @@ export class Input {
   // player slot rides along so same-screen multiplayer games know which seat.
   _onParentMessage(e) {
     const msg = e.data;
-    if (msg && msg.type === "sc:intent" && typeof msg.intent === "string") {
+    if (!msg) return;
+    if (msg.type === "sc:intent" && typeof msg.intent === "string") {
       this._emit(msg.intent, Number(msg.player) || 1);
+    } else if (msg.type === "sc:analog") {
+      const state = {
+        steer: clamp1(msg.steer),
+        throttle: clamp1(msg.throttle),
+        brake: clamp01(msg.brake),
+        handbrake: !!msg.handbrake,
+      };
+      const player = Number(msg.player) || 1;
+      for (const h of this.analogHandlers) h(state, player);
     }
   }
 
@@ -221,4 +244,12 @@ function axis(pad, i) {
 }
 function now() {
   return performance.now();
+}
+function clamp1(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.max(-1, Math.min(1, n)) : 0;
+}
+function clamp01(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : 0;
 }

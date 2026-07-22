@@ -6,9 +6,9 @@
 //
 // Controls: ← / → run, Space / ↑ / Z jump (hold for a higher jump).
 
-import { Engine, TILE, PW, PH } from "./engine.js?v=b4e2573e-93ad-4773-bd69-8f510ab9f78c";
-import { Input } from "../assets/js/shared/input.js?v=b4e2573e-93ad-4773-bd69-8f510ab9f78c";
-import { Sound } from "../assets/js/shared/sound.js?v=b4e2573e-93ad-4773-bd69-8f510ab9f78c";
+import { Engine, TILE, PW, PH } from "./engine.js?v=ba40ea1b-ba9e-440b-b26a-94527815dafb";
+import { Input } from "../assets/js/shared/input.js?v=ba40ea1b-ba9e-440b-b26a-94527815dafb";
+import { Sound } from "../assets/js/shared/sound.js?v=ba40ea1b-ba9e-440b-b26a-94527815dafb";
 
 const VIEW_W = 512, VIEW_H = 448;
 
