@@ -27,7 +27,8 @@ export default [
     },
   },
   {
-    // Build outputs / vendored assets — never lint these.
-    ignores: ["_dist/**", "_site/**", "node_modules/**"],
+    // Build outputs / vendored assets — never lint these. yardline-rc is a
+    // vendored Vite/Babylon build (minified bundle), not hand-written source.
+    ignores: ["_dist/**", "_site/**", "node_modules/**", "yardline-rc/**"],
   },
 ];
