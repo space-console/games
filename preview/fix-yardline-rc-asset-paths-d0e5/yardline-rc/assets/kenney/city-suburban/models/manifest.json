@@ -1,0 +1,11 @@
+{
+  "props": [
+    { "file": "building-type-a.glb", "name": "licensed-house-north", "position": [-8, 0, 66], "rotationY": 3.1416, "scale": 8.5 },
+    { "file": "building-type-q.glb", "name": "licensed-house-east", "position": [65, 0, 5], "rotationY": -1.5708, "scale": 8.5 },
+    { "file": "tree-large.glb", "name": "licensed-tree-west", "position": [-63, 0, -4], "scale": 6.2 },
+    { "file": "tree-small.glb", "name": "licensed-tree-south", "position": [27, 0, -58], "scale": 6.5 },
+    { "file": "planter.glb", "name": "licensed-planter-a", "position": [-20, 0, -49], "scale": 4.5 },
+    { "file": "planter.glb", "name": "licensed-planter-b", "position": [20, 0, 52], "rotationY": 1.5708, "scale": 4.5 },
+    { "file": "fence-low.glb", "name": "licensed-fence-north", "position": [24, 0, 62], "rotationY": 1.5708, "scale": 5.5 }
+  ]
+}
