@@ -16,10 +16,10 @@ import {
   WORLD_W, WORLD_H,
   WALL, PLAY_L, PLAY_R, FLOOR_Y,
   PLAYER_W, PLAYER_H,
-} from "./engine.js?v=fdbc62ff-7714-45c9-b23f-8ac027f58adf";
-import { Input } from "../assets/js/shared/input.js?v=fdbc62ff-7714-45c9-b23f-8ac027f58adf";
-import { Sound } from "../assets/js/shared/sound.js?v=fdbc62ff-7714-45c9-b23f-8ac027f58adf";
-import { Controls } from "../assets/js/shared/controls.js?v=fdbc62ff-7714-45c9-b23f-8ac027f58adf";
+} from "./engine.js?v=8f57c5d5-e13a-4e5a-aac1-a71b2937f97a";
+import { Input } from "../assets/js/shared/input.js?v=8f57c5d5-e13a-4e5a-aac1-a71b2937f97a";
+import { Sound } from "../assets/js/shared/sound.js?v=8f57c5d5-e13a-4e5a-aac1-a71b2937f97a";
+import { Controls } from "../assets/js/shared/controls.js?v=8f57c5d5-e13a-4e5a-aac1-a71b2937f97a";
 
 const engine = new Engine(Math.random);
 const input = new Input();
