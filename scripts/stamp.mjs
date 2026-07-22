@@ -57,6 +57,7 @@ const INCLUDE = [
   "imposter",
   "star-hopper",
   "rc-rush",
+  "yardline-rc",
 ];
 
 const version = randomUUID();
