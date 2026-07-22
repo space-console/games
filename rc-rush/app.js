@@ -2,11 +2,11 @@
 // segment ribbon from engine.js with a chase camera for a behind-the-car view,
 // and paints the road, room walls, boosters, rival cars, and the player's RC.
 
-import { Race, SEG, ROAD, WALL_H, CAM_HEIGHT, LAPS, THEMES } from "./engine.js?v=ba40ea1b-ba9e-440b-b26a-94527815dafb";
-import { Input } from "../assets/js/shared/input.js?v=ba40ea1b-ba9e-440b-b26a-94527815dafb";
-import { Controls } from "../assets/js/shared/controls.js?v=ba40ea1b-ba9e-440b-b26a-94527815dafb";
-import { Stats } from "../assets/js/shared/stats.js?v=ba40ea1b-ba9e-440b-b26a-94527815dafb";
-import { Sound } from "../assets/js/shared/sound.js?v=ba40ea1b-ba9e-440b-b26a-94527815dafb";
+import { Race, SEG, ROAD, WALL_H, CAM_HEIGHT, LAPS, THEMES } from "./engine.js?v=fdbc62ff-7714-45c9-b23f-8ac027f58adf";
+import { Input } from "../assets/js/shared/input.js?v=fdbc62ff-7714-45c9-b23f-8ac027f58adf";
+import { Controls } from "../assets/js/shared/controls.js?v=fdbc62ff-7714-45c9-b23f-8ac027f58adf";
+import { Stats } from "../assets/js/shared/stats.js?v=fdbc62ff-7714-45c9-b23f-8ac027f58adf";
+import { Sound } from "../assets/js/shared/sound.js?v=fdbc62ff-7714-45c9-b23f-8ac027f58adf";
 
 const canvas = document.getElementById("view");
 const ctx = canvas.getContext("2d");

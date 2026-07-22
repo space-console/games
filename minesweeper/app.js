@@ -4,10 +4,10 @@
 // counters, and manages game state (idle → playing → won/lost). The engine owns
 // all board logic; this file is input + render + the clock only.
 
-import { Engine } from "./engine.js?v=ba40ea1b-ba9e-440b-b26a-94527815dafb";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=ba40ea1b-ba9e-440b-b26a-94527815dafb";
-import { Sound } from "../assets/js/shared/sound.js?v=ba40ea1b-ba9e-440b-b26a-94527815dafb";
-import { Controls } from "../assets/js/shared/controls.js?v=ba40ea1b-ba9e-440b-b26a-94527815dafb";
+import { Engine } from "./engine.js?v=fdbc62ff-7714-45c9-b23f-8ac027f58adf";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=fdbc62ff-7714-45c9-b23f-8ac027f58adf";
+import { Sound } from "../assets/js/shared/sound.js?v=fdbc62ff-7714-45c9-b23f-8ac027f58adf";
+import { Controls } from "../assets/js/shared/controls.js?v=fdbc62ff-7714-45c9-b23f-8ac027f58adf";
 
 // Difficulty presets. Expert is wide — the board scrolls horizontally on small
 // screens (see .board__scroll in style.css) so it never overflows the layout.

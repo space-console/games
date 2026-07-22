@@ -13,10 +13,10 @@ import {
   WALL, PLAY_L, PLAY_R,
   GROUND_Y, FLOOR_GAP,
   PLAYER_W, PLAYER_H,
-} from "./engine.js?v=ba40ea1b-ba9e-440b-b26a-94527815dafb";
-import { Input } from "../assets/js/shared/input.js?v=ba40ea1b-ba9e-440b-b26a-94527815dafb";
-import { Sound } from "../assets/js/shared/sound.js?v=ba40ea1b-ba9e-440b-b26a-94527815dafb";
-import { Controls } from "../assets/js/shared/controls.js?v=ba40ea1b-ba9e-440b-b26a-94527815dafb";
+} from "./engine.js?v=fdbc62ff-7714-45c9-b23f-8ac027f58adf";
+import { Input } from "../assets/js/shared/input.js?v=fdbc62ff-7714-45c9-b23f-8ac027f58adf";
+import { Sound } from "../assets/js/shared/sound.js?v=fdbc62ff-7714-45c9-b23f-8ac027f58adf";
+import { Controls } from "../assets/js/shared/controls.js?v=fdbc62ff-7714-45c9-b23f-8ac027f58adf";
 
 const engine = new Engine(Math.random);
 const input = new Input();
