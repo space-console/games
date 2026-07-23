@@ -5,8 +5,18 @@ Havok + React + Vite game; its source lives in a separate repo. The Space Consol
 hosts the compiled bundle here (the zero-build `games` collection can't build it).
 
 ## Rebuilding
-In the source repo: `npm install && npm run build` (vite.config sets `base: './'`),
-then copy `dist/` over this folder and prune (see below).
+In the source repo (`Artan0/razing`): `npm install && npm run build`, then copy
+`dist/` over this folder and prune (see below). `vite.config.ts` sets
+`base: './'` (relative entry paths for the subpath embed) and
+`resolve.dedupe: ['@babylonjs/core', ...]`.
+
+**Why dedupe matters (fixed 2026-07-23):** the source mixes barrel imports
+(`from '@babylonjs/core'`) with deep imports (`from '@babylonjs/core/Misc/...'`),
+so without `resolve.dedupe` Rollup bundles Babylon twice; the duplicate class
+decorators then throw `Cannot redefine property: onBeforeViewRenderObservable` at
+runtime, which aborts model loading — the scene renders but **cars/props never
+appear**. After a rebuild, confirm a single entry chunk and no dup:
+`ls dist/assets/index-*.js` (expect one).
 
 Asset paths must be RELATIVE (`assets/...`, not `/assets/...`) so they resolve
 under this subpath. Do not reintroduce leading-slash asset paths.
