@@ -4,9 +4,9 @@
 // keyboard/remote scheme, tracks Score/Best, and shows the game-over overlay.
 // The engine owns all game logic; this file is input + render only.
 
-import { Engine, SIZE } from "./engine.js?v=48a90d3f-c5c2-4590-820c-657b3b4968d9";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=48a90d3f-c5c2-4590-820c-657b3b4968d9";
-import { Sound } from "../assets/js/shared/sound.js?v=48a90d3f-c5c2-4590-820c-657b3b4968d9";
+import { Engine, SIZE } from "./engine.js?v=5ae7a4f1-6580-4392-bc3c-538fd4093a43";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=5ae7a4f1-6580-4392-bc3c-538fd4093a43";
+import { Sound } from "../assets/js/shared/sound.js?v=5ae7a4f1-6580-4392-bc3c-538fd4093a43";
 
 // Colours indexed by the engine's piece colour ids (1..13). 0 = empty (no entry).
 const COLORS = [
