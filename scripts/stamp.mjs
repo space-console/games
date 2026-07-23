@@ -14,11 +14,24 @@
 // so stamping only the entry <script> would leave the modules cached.
 
 import { cp, readFile, writeFile, rm, readdir } from "node:fs/promises";
-import { join, extname } from "node:path";
+import { join, extname, relative, sep } from "node:path";
 import { randomUUID } from "node:crypto";
 
 const SRC = ".";
 const OUT = "_dist";
+
+// Pre-built games whose OWN bundler already content-hashes every asset (e.g. a
+// Vite build: index-CSoa7UUc.js). They are cache-busted by those hashes, so they
+// must be copied but NEVER stamped. Appending ?v to a Vite entry is actively
+// harmful: the app derives dynamic-import URLs from import.meta.url, so the query
+// rides along and a second copy of shared modules loads under the ?v URL while
+// the preloaded copy has none. For Babylon.js that double-init throws
+// "Cannot redefine property: onBeforeViewRenderObservable" and the scene dies.
+const NO_STAMP = ["yardline-rc"];
+function isNoStamp(file) {
+  const rel = relative(OUT, file);
+  return NO_STAMP.some((d) => rel === d || rel.startsWith(d + sep));
+}
 
 // What gets copied into the deployable site. Everything the browser needs and
 // nothing else (no node_modules, scripts, CI, git, or the previous build).
@@ -108,6 +121,7 @@ async function main() {
   }
 
   for await (const file of walk(OUT)) {
+    if (isNoStamp(file)) continue; // pre-built app — leave its hashed assets alone
     const ext = extname(file).toLowerCase();
     if (ext === ".js" || ext === ".mjs") await stampJsFile(file);
     else if (ext === ".html") await stampHtmlFile(file);
