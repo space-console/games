@@ -9,9 +9,9 @@
 
 import {
   Engine, WORLD_W, WORLD_H, WALL, P_R,
-} from "./engine.js?v=8f57c5d5-e13a-4e5a-aac1-a71b2937f97a";
-import { Input } from "../assets/js/shared/input.js?v=8f57c5d5-e13a-4e5a-aac1-a71b2937f97a";
-import { Sound } from "../assets/js/shared/sound.js?v=8f57c5d5-e13a-4e5a-aac1-a71b2937f97a";
+} from "./engine.js?v=48a90d3f-c5c2-4590-820c-657b3b4968d9";
+import { Input } from "../assets/js/shared/input.js?v=48a90d3f-c5c2-4590-820c-657b3b4968d9";
+import { Sound } from "../assets/js/shared/sound.js?v=48a90d3f-c5c2-4590-820c-657b3b4968d9";
 
 const engine = new Engine();
 const input = new Input();
