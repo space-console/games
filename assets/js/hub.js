@@ -4,7 +4,7 @@
 // of Space Console speaks, so a keyboard, TV remote, gamepad, or phone
 // controller all drive the menu.
 
-import { Input } from "./shared/input.js?v=5ae7a4f1-6580-4392-bc3c-538fd4093a43";
+import { Input } from "./shared/input.js?v=7e2184e9-4730-4595-9e9c-5d0075859b07";
 
 const input = new Input();
 const tiles = [...document.querySelectorAll(".tile[data-href]")];

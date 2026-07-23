@@ -8,9 +8,9 @@
 
 import {
   Engine, COLORS, START, SAFE_SQUARES, TRACK_LEN, PATH_HOME_ENTRY, PATH_FINISH,
-} from "./engine.js?v=5ae7a4f1-6580-4392-bc3c-538fd4093a43";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=5ae7a4f1-6580-4392-bc3c-538fd4093a43";
-import { Sound } from "../assets/js/shared/sound.js?v=5ae7a4f1-6580-4392-bc3c-538fd4093a43";
+} from "./engine.js?v=7e2184e9-4730-4595-9e9c-5d0075859b07";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=7e2184e9-4730-4595-9e9c-5d0075859b07";
+import { Sound } from "../assets/js/shared/sound.js?v=7e2184e9-4730-4595-9e9c-5d0075859b07";
 
 const engine = new Engine();
 const input = new Input();

@@ -1,4 +1,4 @@
-import{t as e}from"./shaderStore-D-XQlhUT.js";import{J as t,g as n}from"./index-CiMN62db.js";var r=`fibonacci`,i=`#define rcp(x) 1./x
+import{t as e}from"./shaderStore-D-XQlhUT.js";import{J as t,g as n}from"./index-CSoa7UUc.js";var r=`fibonacci`,i=`#define rcp(x) 1./x
 #define GOLDEN_RATIO 1.618033988749895
 vec2 Golden2dSeq(int i,float n)
 {return vec2(float(i)/n+(0.5/n),fract(float(i)*rcp(GOLDEN_RATIO)));}

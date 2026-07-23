@@ -1,4 +1,4 @@
-import{t as e}from"./shaderStore-D-XQlhUT.js";import{t}from"./sceneUboDeclaration-B96Tfx7b.js";import{t as n}from"./meshUboDeclaration-BATNZvmb.js";import{B as r,M as i,N as a,P as o,U as s,j as c,l,z as u}from"./index-CiMN62db.js";var d=`gaussianSplattingVertexShader`,f=`#include<sceneUboDeclaration>
+import{t as e}from"./shaderStore-D-XQlhUT.js";import{t}from"./sceneUboDeclaration-B96Tfx7b.js";import{t as n}from"./meshUboDeclaration-BATNZvmb.js";import{B as r,M as i,N as a,P as o,U as s,j as c,l,z as u}from"./index-CSoa7UUc.js";var d=`gaussianSplattingVertexShader`,f=`#include<sceneUboDeclaration>
 #include<meshUboDeclaration>
 #include<helperFunctions>
 #include<clipPlaneVertexDeclaration>
