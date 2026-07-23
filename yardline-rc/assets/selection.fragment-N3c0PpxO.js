@@ -1,4 +1,4 @@
-import{t as e}from"./shaderStore-D-XQlhUT.js";import{K as t,q as n}from"./index-CiMN62db.js";var r=`selectionPixelShader`,i=`#ifdef INSTANCES
+import{t as e}from"./shaderStore-D-XQlhUT.js";import{K as t,q as n}from"./index-CSoa7UUc.js";var r=`selectionPixelShader`,i=`#ifdef INSTANCES
 flat varying float vSelectionId;
 #else
 uniform float selectionId;
