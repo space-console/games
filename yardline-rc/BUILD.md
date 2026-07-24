@@ -33,6 +33,25 @@ with `import.meta.env.BASE_URL` (or a relative base) so a rebuild stays correct.
 After ANY rebuild, verify no `` `/assets/ `` remain:
 `grep -c '`/assets/' assets/index-*.js` must be 0.
 
+**Phone-controller bridge (patched 2026-07-24):** the source builds embed a
+bridge that (a) tells the console shell which phone pad to show per race phase
+via `postMessage({type:"sc:controls", …})` and (b) receives the phone's
+`sc:analog` driving frames + `sc:intent` button presses back. The 2026-07-23
+deduped rebuild came from a source tree WITHOUT that bridge, so the phone fell
+back to a d-pad and no input reached the car — the cars rendered but were
+undrivable from a phone. Restored here without a rebuild:
+- `index.html` carries an inline `<script>` bridge (mirrors the original:
+  per-phase `sc:controls`, analog → `setTouchDrive/Brake/Handbrake`, intents →
+  reset/powerup/pause/menu-nav).
+- `assets/index-*.js` is patched to expose the two runtime instances the bridge
+  drives: `window.__scInput=this` in the input-controller constructor and
+  `window.__scRace=this` in the race-state-machine constructor.
+
+After ANY rebuild, verify the bridge survives: `grep -c 'sc:analog' index.html`
+must be ≥1, and `grep -c 'window.__scInput=this' assets/index-*.js` must be 1
+(else re-apply, or — the proper fix — restore the embed bridge in
+`Artan0/razing` and rebuild, then drop the inline shim).
+
 ## Pruned for the console embed
 Full build ~138 MB (Downtown MegaKit + editor-only props). The console only plays
 the fixed `construction-loop` preset, so editor-only assets are pruned to ~64 MB.
