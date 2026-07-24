@@ -13,10 +13,10 @@
 // the touch class + gestures exist) and supplies the discrete intents:
 // enter = launch / start / restart, back = hub.
 
-import { World, WIDTH, HEIGHT, FIXED_DT, BALL_R, FLIP_W } from "./engine.js?v=b1e2ac1c-d3d9-471f-8007-a0d90f696646";
-import { Input } from "../assets/js/shared/input.js?v=b1e2ac1c-d3d9-471f-8007-a0d90f696646";
-import { Sound } from "../assets/js/shared/sound.js?v=b1e2ac1c-d3d9-471f-8007-a0d90f696646";
-import { Controls } from "../assets/js/shared/controls.js?v=b1e2ac1c-d3d9-471f-8007-a0d90f696646";
+import { World, WIDTH, HEIGHT, FIXED_DT, BALL_R, FLIP_W } from "./engine.js?v=96cdcc4c-66c0-44ef-a78b-0261384d5fad";
+import { Input } from "../assets/js/shared/input.js?v=96cdcc4c-66c0-44ef-a78b-0261384d5fad";
+import { Sound } from "../assets/js/shared/sound.js?v=96cdcc4c-66c0-44ef-a78b-0261384d5fad";
+import { Controls } from "../assets/js/shared/controls.js?v=96cdcc4c-66c0-44ef-a78b-0261384d5fad";
 
 const world = new World();
 const input = new Input();
