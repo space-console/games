@@ -6,6 +6,87 @@
     <meta name="theme-color" content="#17191d" />
     <meta name="description" content="Yardline RC — small cars, serious racing." />
     <title>Yardline RC</title>
+    <!-- Space Console phone-controller bridge. The 2026-07-23 Babylon rebuild
+         (dedupe fix for the missing cars) dropped the in-bundle embed bridge, so
+         the phone showed a d-pad and no input reached the car. This restores it
+         against two runtime handles the bundle now exposes on window
+         (__scInput = input controller, __scRace = race state machine). It mirrors
+         the original: declares the pad layout per race phase, feeds analog frames
+         into the car, and routes discrete intents. See BUILD.md. Remove this once
+         the source repo (Artan0/razing) rebuilds with the bridge included. -->
+    <script>
+      (function () {
+        if (window.parent === window) return; // only inside the console shell
+
+        var DPAD   = { type: "sc:controls", profile: "dpad",    buttons: [{ id: "enter", label: "Select" }] };
+        var ANALOG = { type: "sc:controls", profile: "analog",  buttons: [{ id: "powerup", label: "PWR" }, { id: "reset", label: "RESET" }, { id: "pause", label: "II" }] };
+        var FINISH = { type: "sc:controls", profile: "buttons", buttons: [{ id: "enter", label: "Rematch" }, { id: "menu", label: "Menu" }] };
+        var MENU_KEYS = { up: "ArrowUp", down: "ArrowDown", left: "ArrowLeft", right: "ArrowRight", enter: "Enter" };
+
+        function phase() {
+          var r = window.__scRace;
+          return (r && typeof r.phase === "string") ? r.phase : "booting";
+        }
+        function controlsFor(p) {
+          if (p === "racing" || p === "countdown" || p === "paused") return ANALOG;
+          if (p === "finished") return FINISH;
+          return DPAD;
+        }
+        function num(v) { var n = Number(v); return isFinite(n) ? n : 0; }
+        function tapKey(key) {
+          window.dispatchEvent(new KeyboardEvent("keydown", { key: key, bubbles: true }));
+          window.dispatchEvent(new KeyboardEvent("keyup",   { key: key, bubbles: true }));
+        }
+
+        // Tell the launcher which pad to show, re-sending whenever the phase's pad
+        // category changes (d-pad menu <-> analog wheel <-> results buttons).
+        var lastControls = null;
+        function pushControls() {
+          var c = controlsFor(phase());
+          if (c !== lastControls) {
+            lastControls = c;
+            try { window.parent.postMessage(c, "*"); } catch (e) {}
+          }
+        }
+        pushControls();
+        setInterval(pushControls, 250);
+
+        window.addEventListener("message", function (e) {
+          if (e.source !== window.parent) return;
+          var m = e.data;
+          if (!m || typeof m !== "object") return;
+
+          if (m.type === "sc:analog") {
+            var input = window.__scInput;
+            if (!input) return;
+            input.setTouchDrive(num(m.throttle), num(m.steer));
+            input.setTouchBrake(num(m.brake));
+            input.setTouchHandbrake(!!m.handbrake);
+            return;
+          }
+
+          if (m.type === "sc:intent" && typeof m.intent === "string") {
+            var input2 = window.__scInput, race = window.__scRace, p = phase();
+            if (p === "menu" || p === "booting") {
+              var k = MENU_KEYS[m.intent];
+              if (k) tapKey(k);
+              return;
+            }
+            if (p === "finished") {
+              if (m.intent === "menu" && race && race.returnToMenu) race.returnToMenu();
+              else if (m.intent === "enter") tapKey("Enter");
+              return;
+            }
+            switch (m.intent) {
+              case "pause":   if (race && race.togglePause) race.togglePause(); break;
+              case "powerup": if (input2 && input2.requestUsePowerup) input2.requestUsePowerup(); break;
+              case "reset":   if (input2 && input2.requestReset) input2.requestReset(); break;
+              case "enter":   if (p === "paused" && race && race.togglePause) race.togglePause(); break;
+            }
+          }
+        });
+      })();
+    </script>
     <script type="module" crossorigin src="./assets/index-CSoa7UUc.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/math.scalar.functions-oml-n4mO.js">
     <link rel="modulepreload" crossorigin href="./assets/observable.pure-B4ZVEGuQ.js">

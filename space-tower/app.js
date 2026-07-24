@@ -12,10 +12,10 @@ import {
   Engine,
   WORLD_W, WORLD_H, BLOCK_H, BASE_Y,
   DROP_H, PIVOT_UP,
-} from "./engine.js?v=b5f9a65b-a736-41f1-903b-c3c61c5a8611";
-import { Input } from "../assets/js/shared/input.js?v=b5f9a65b-a736-41f1-903b-c3c61c5a8611";
-import { Sound } from "../assets/js/shared/sound.js?v=b5f9a65b-a736-41f1-903b-c3c61c5a8611";
-import { Controls } from "../assets/js/shared/controls.js?v=b5f9a65b-a736-41f1-903b-c3c61c5a8611";
+} from "./engine.js?v=b1e2ac1c-d3d9-471f-8007-a0d90f696646";
+import { Input } from "../assets/js/shared/input.js?v=b1e2ac1c-d3d9-471f-8007-a0d90f696646";
+import { Sound } from "../assets/js/shared/sound.js?v=b1e2ac1c-d3d9-471f-8007-a0d90f696646";
+import { Controls } from "../assets/js/shared/controls.js?v=b1e2ac1c-d3d9-471f-8007-a0d90f696646";
 
 const engine = new Engine(Math.random);
 const input = new Input();
