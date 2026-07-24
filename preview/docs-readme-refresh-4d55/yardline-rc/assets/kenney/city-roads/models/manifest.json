@@ -1,0 +1,5 @@
+{
+  "props": [
+    { "file": "road-slant.glb", "name": "licensed-display-ramp", "position": [46, 0.12, 41], "rotationY": 0.58, "scale": 3.2, "shadows": false }
+  ]
+}

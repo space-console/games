@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#05060f" />
+  <title>RC Rush — Space Console</title>
+  <link rel="manifest" href="../manifest.json" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- Full-screen racer: the canvas fills the viewport; everything else is an
+       overlay on top of it. -->
+  <canvas id="view"></canvas>
+
+  <!-- Heads-up display -->
+  <div class="hud">
+    <div class="hud__cluster hud__tl">
+      <div class="stat"><span class="stat__k">LAP</span><span class="stat__v"><b id="lap">1</b>/3</span></div>
+      <div class="stat"><span class="stat__k">POS</span><span class="stat__v"><b id="pos">4</b>/4</span></div>
+    </div>
+    <div class="hud__room" id="room">Kitchen</div>
+    <div class="hud__cluster hud__tr">
+      <div class="stat"><span class="stat__k">TIME</span><span class="stat__v" id="time">0.0</span></div>
+      <button class="iconbtn" id="mute" type="button" aria-pressed="false" aria-label="Toggle sound" title="Mute (M)">🔊</button>
+    </div>
+    <div class="hud__br">
+      <div class="boost"><span class="boost__k">BOOST</span><div class="boost__bar"><div class="boost__fill" id="boostFill"></div></div></div>
+      <div class="speedo"><span id="speed">0</span><small>km/h</small></div>
+    </div>
+  </div>
+
+  <!-- Countdown -->
+  <div class="count" id="count" hidden>3</div>
+
+  <!-- Start overlay -->
+  <div class="overlay" id="overlay">
+    <div class="card">
+      <div class="card__badge">RC</div>
+      <h1 class="title" id="title">RC&nbsp;Rush</h1>
+      <p class="sub" id="sub">
+        3 laps, room to room. Grab the <b style="color:#6ce0ff">▲ boosters</b> for turbo.<br />
+        <span class="keys"><kbd>↑</kbd> Gas · <kbd>↓</kbd> Brake · <kbd>← →</kbd> Steer</span>
+      </p>
+      <button class="cta" id="cta" type="button">Press Enter to race</button>
+      <p class="sub sub--dim">Esc / Back returns to menu</p>
+    </div>
+  </div>
+
+  <!-- Results overlay -->
+  <div class="overlay results" id="results" hidden>
+    <div class="card">
+      <h1 class="results__head title">Race over</h1>
+      <p class="sub results__time">Time 0.0s</p>
+      <ol class="results__list" id="resultList"></ol>
+      <button class="cta" id="ctaAgain" type="button" onclick="document.getElementById('cta').click()">Race again</button>
+    </div>
+  </div>
+
+  <script type="module" src="./app.js?v=454bf8a6-3df3-484d-80fa-3b9a6e1ec2af"></script>
+</body>
+</html>
