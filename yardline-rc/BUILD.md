@@ -52,8 +52,29 @@ must be ≥1, and `grep -c 'window.__scInput=this' assets/index-*.js` must be 1
 (else re-apply, or — the proper fix — restore the embed bridge in
 `Artan0/razing` and rebuild, then drop the inline shim).
 
+**Map editor nav paths (patched 2026-07-30):** the bundle ships two editors — the
+2D "Map Workbench" page (route: `location.pathname === '/map-editor'` **or**
+`?tool=map-editor`) and a 3D fly-and-edit overlay (`?fly=1`). Their navigation was
+emitted as SITE-absolute literals, the same class of bug as the asset paths above:
+`` `/?map=construction-loop&editorDraft=1&seed=…` `` (Test drive, ×3),
+`` href:`/map-editor` `` (Open 2D editor), and the workbench brand link `` href:`/` ``.
+Under `/games/yardline-rc/` those all bounce to the console root instead of the game.
+Patched here to `` `./?map=…` ``, `` `./?tool=map-editor` ``, and `` `./` ``.
+After ANY rebuild, verify: ``grep -c 'href=`/?map=' assets/index-*.js`` must be 0.
+Reach the editor only via the query form (`?tool=map-editor`) — the pathname branch
+can't match under the subpath. The proper source-side fix is `import.meta.env.BASE_URL`
+on these, same as the runtime model paths.
+
+The console links the workbench from the "Map Workbench" tile in `../index.html`.
+Note it needs keyboard + mouse (WASD / ⌘S / right-drag look), so it's a laptop tool,
+not a TV-pad one.
+
 ## Pruned for the console embed
 Full build ~138 MB (Downtown MegaKit + editor-only props). The console only plays
 the fixed `construction-loop` preset, so editor-only assets are pruned to ~64 MB.
 Kept: everything the preset places + all cars + opponents + particles. If the
 preset changes to place a different kit asset, re-copy the full `dist/` first.
+
+This bites the map editor now that it's reachable: its asset palette lists the whole
+kit, but only preset-used models are on disk, so placing anything else 404s the model
+and drops an invisible object. Re-copy the full `dist/` before authoring maps.

@@ -12,11 +12,11 @@ import {
   PARTIAL_WINS,
   JACKPOT_KEY,
   REELS,
-} from "./engine.js?v=96cdcc4c-66c0-44ef-a78b-0261384d5fad";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=96cdcc4c-66c0-44ef-a78b-0261384d5fad";
-import { mountButtons } from "../assets/js/shared/touch.js?v=96cdcc4c-66c0-44ef-a78b-0261384d5fad";
-import { Sound } from "../assets/js/shared/sound.js?v=96cdcc4c-66c0-44ef-a78b-0261384d5fad";
-import { Controls } from "../assets/js/shared/controls.js?v=96cdcc4c-66c0-44ef-a78b-0261384d5fad";
+} from "./engine.js?v=d2e2bff9-4cc1-4728-961e-82f2fa0a5a0b";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=d2e2bff9-4cc1-4728-961e-82f2fa0a5a0b";
+import { mountButtons } from "../assets/js/shared/touch.js?v=d2e2bff9-4cc1-4728-961e-82f2fa0a5a0b";
+import { Sound } from "../assets/js/shared/sound.js?v=d2e2bff9-4cc1-4728-961e-82f2fa0a5a0b";
+import { Controls } from "../assets/js/shared/controls.js?v=d2e2bff9-4cc1-4728-961e-82f2fa0a5a0b";
 
 const engine = new Engine();
 const input = new Input();
