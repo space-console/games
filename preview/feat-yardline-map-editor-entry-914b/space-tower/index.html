@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- TV browsers default to a desktop-width viewport; pin to device width and lock zoom for the 10-foot UI. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#05060f" />
+  <title>Space Tower — Space Console</title>
+  <link rel="manifest" href="../manifest.json" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- safe-area wrapper protects against TV overscan; see --safe-* in base.css -->
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <a href="../" aria-label="Back to games">
+          <span class="brand__mark" aria-hidden="true"></span>
+          <span class="brand__name">Space Tower</span>
+        </a>
+      </div>
+      <div class="topbar__hint" id="status" aria-live="polite">Press Enter to start</div>
+      <button class="mute" id="mute" type="button" aria-pressed="false" aria-label="Toggle sound" title="Toggle sound (M)">🔊</button>
+    </header>
+
+    <main class="stage">
+      <!-- Playfield: a tall portrait tower -->
+      <section class="board" aria-label="Playfield">
+        <canvas id="board" width="460" height="680"></canvas>
+        <!-- Overlay: start menu / game-over messaging -->
+        <div class="overlay" id="overlay">
+          <div class="overlay__card">
+            <h1 class="overlay__title" id="overlayTitle">Space Tower</h1>
+            <p class="overlay__msg" id="overlayMsg">A crane drops houses from the sky — stack them straight or the tower topples!</p>
+            <div class="menu">
+              <button class="mbtn mbtn--p1" id="btn1p" type="button" data-touch-ignore>1 Player</button>
+              <button class="mbtn mbtn--p2" id="btn2p" type="button" data-touch-ignore>2 Players</button>
+            </div>
+            <p class="menu__keys">
+              <span><b>1P</b> <kbd>Space</kbd> drop</span>
+              <span><b>Co-op</b> take turns — <kbd>A</kbd> drops for P1, <kbd>L</kbd> for P2</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Side panel: scoreboard -->
+      <aside class="panel" aria-label="Game info">
+        <dl class="scoreboard">
+          <div class="score"><dt>Height</dt><dd id="height">0</dd></div>
+          <div class="score"><dt>Score</dt><dd id="score">0</dd></div>
+          <div class="score"><dt>Best</dt><dd id="best">0</dd></div>
+        </dl>
+
+        <!-- On-screen control (touch devices only) -->
+        <div class="touch-controls touch-only" id="touchControls" aria-hidden="true">
+          <button class="tbtn tbtn--drop" id="btnDrop" type="button" data-touch-ignore aria-label="Drop section">DROP</button>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="hintbar" id="hintbar">
+      <span class="hint"><kbd class="key">Space</kbd> Drop</span>
+      <span class="hint"><kbd class="key">A</kbd> P1 Drop</span>
+      <span class="hint"><kbd class="key">L</kbd> P2 Drop</span>
+      <span class="hint"><kbd class="key">Back</kbd> Menu</span>
+      <span class="hint"><kbd class="key">M</kbd> Mute</span>
+    </footer>
+  </div>
+
+  <script type="module" src="./app.js?v=748f066e-ac05-4d19-bbb9-fbf93fc23c93"></script>
+</body>
+</html>
