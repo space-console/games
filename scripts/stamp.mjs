@@ -51,6 +51,7 @@ const INCLUDE = [
   "blackjack",
   "solitaire",
   "checkers",
+  "pool",
   "yahtzee",
   "minesweeper",
   "slots",
