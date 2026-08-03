@@ -13,11 +13,11 @@ import {
   rankLabel,
   handValue,
   MIN_BET,
-} from "./engine.js?v=d2e2bff9-4cc1-4728-961e-82f2fa0a5a0b";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=d2e2bff9-4cc1-4728-961e-82f2fa0a5a0b";
-import { mountButtons } from "../assets/js/shared/touch.js?v=d2e2bff9-4cc1-4728-961e-82f2fa0a5a0b";
-import { Sound } from "../assets/js/shared/sound.js?v=d2e2bff9-4cc1-4728-961e-82f2fa0a5a0b";
-import { Controls } from "../assets/js/shared/controls.js?v=d2e2bff9-4cc1-4728-961e-82f2fa0a5a0b";
+} from "./engine.js?v=5f45cf0e-18e1-45f6-8078-fe425c1f5555";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=5f45cf0e-18e1-45f6-8078-fe425c1f5555";
+import { mountButtons } from "../assets/js/shared/touch.js?v=5f45cf0e-18e1-45f6-8078-fe425c1f5555";
+import { Sound } from "../assets/js/shared/sound.js?v=5f45cf0e-18e1-45f6-8078-fe425c1f5555";
+import { Controls } from "../assets/js/shared/controls.js?v=5f45cf0e-18e1-45f6-8078-fe425c1f5555";
 
 const engine = new Engine();
 const input = new Input();
